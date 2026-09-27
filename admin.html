@@ -1,179 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بن الغرباوي - لوحة تحكم طلبات التوظيف</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #121212; color: #e5e7eb; }
-        .card-bg { background-color: #1e1e1e; border: 1px solid #2d2d2d; }
-        .brand-btn { background-color: #4A2E18; color: #fff; transition: 0.3s; }
-        .brand-btn:hover { background-color: #5c391f; }
-        input, select { background-color: #2a2a2a !important; border-color: #3f3f3f !important; color: white !important; }
-        input:focus, select:focus { border-color: #C5A059 !important; outline: none; }
-        @keyframes slideIn {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .toast-animate { animation: slideIn 0.3s ease-out forwards; }
-    </style>
-</head>
-<body class="min-h-screen py-6 px-4">
-
-    <!-- حاوية الإشعارات اللحظية (Toast) -->
-    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4 pointer-events-none"></div>
-
-    <!-- شاشة تسجيل الدخول -->
-    <div id="loginScreen" class="fixed inset-0 bg-[#121212] flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center">
-            <div class="w-14 h-14 rounded-full bg-[#4A2E18] border border-amber-600 flex items-center justify-center text-amber-400 font-bold text-xl mx-auto mb-4 shadow-inner">
-                🔒
-            </div>
-            <h1 class="text-xl font-bold text-amber-500 mb-2">تسجيل دخول المشرف</h1>
-            <p class="text-xs text-gray-400 mb-6">يرجى إدخال كلمة المرور للوصول إلى لوحة طلبات بن الغرباوي</p>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="password" id="adminPassword" required placeholder="كلمة المرور..." class="w-full px-4 py-3 rounded-xl border text-sm text-center">
-                <button type="submit" class="w-full brand-btn py-3 rounded-xl text-sm font-bold border border-amber-600/30 shadow-md">
-                    دخول لوحة التحكم
-                </button>
-                <p id="loginError" class="text-red-400 text-xs hidden font-semibold">كلمة المرور غير صحيحة، حاول مرة أخرى.</p>
-            </form>
-        </div>
-    </div>
-
-    <!-- لوحة التحكم الرئيسية -->
-    <div id="dashboardContent" class="hidden container mx-auto max-w-7xl">
-        <!-- Header -->
-        <div class="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 mb-6 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-amber-500">لوحة تحكم طلبات التوظيف</h1>
-                    <p class="text-xs text-gray-400 mt-1">بن الغرباوي - إدارة المتقدمين والفرز والمقابلات الشخصية</p>
-                </div>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="logout()" class="bg-red-900/40 hover:bg-red-900/60 text-red-300 px-4 py-2 rounded-xl text-xs font-semibold transition border border-red-700/30">
-                    🚪 تسجيل الخروج
-                </button>
-                <button onclick="loadApplications()" class="brand-btn px-4 py-2 rounded-xl text-xs font-bold shadow">
-                    🔄 تحديث البيانات
-                </button>
-            </div>
-        </div>
-
-        <!-- أشرطة البحث والفلترة المتقدمة -->
-        <div class="card-bg rounded-2xl p-4 mb-6 shadow-lg grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-400">بحث بالاسم أو الهاتف</label>
-                <input type="text" id="searchBox" onkeyup="filterData()" placeholder="اكتب للبحث..." class="w-full px-3 py-2 rounded-lg border text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب الوظيفة</label>
-                <input type="text" id="filterJob" onkeyup="filterData()" placeholder="مثال: باريستا، كاشير..." class="w-full px-3 py-2 rounded-lg border text-sm">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب التقدير</label>
-                <select id="filterGrade" onchange="filterData()" class="w-full px-3 py-2 rounded-lg border text-sm">
-                    <option value="">كل التقديرات</option>
-                    <option value="امتياز">امتياز</option>
-                    <option value="جيد جداً">جيد جداً</option>
-                    <option value="جيد">جيد</option>
-                    <option value="مقبول">مقبول</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب الحالة</label>
-                <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 rounded-lg border text-sm">
-                    <option value="">كل الحالات</option>
-                    <option value="قيد المراجعة">قيد المراجعة</option>
-                    <option value="تم القبول للمقابلة">تم القبول للمقابلة</option>
-                    <option value="مرفوض">مرفوض</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- جدول المتقدمين -->
-        <div class="card-bg rounded-2xl shadow-xl overflow-hidden">
-            <div id="loading" class="text-center py-10 text-gray-400">جاري تحميل الطلبات...</div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-right border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-[#252525] text-amber-400 border-b border-gray-800 text-xs">
-                            <th class="p-3">المتقدم</th>
-                            <th class="p-3">الوظيفة</th>
-                            <th class="p-3">الهاتف</th>
-                            <th class="p-3">المؤهل والتقدير</th>
-                            <th class="p-3">الحالة</th>
-                            <th class="p-3">ميعاد المقابلة</th>
-                            <th class="p-3 text-center">الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="appTableBody" class="divide-y divide-gray-800 text-xs">
-                        <!-- يتم تعبئتها ديناميكياً -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal عرض التفاصيل الكاملة للمتقدم -->
-    <div id="detailsModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
-        <div class="card-bg w-full max-w-3xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-                <h3 class="text-lg font-bold text-amber-400">الملف الشخصي الكامل للمتقدم</h3>
-                <button onclick="closeModal('detailsModal')" class="text-gray-400 hover:text-white font-bold text-lg">✕</button>
-            </div>
-            <div id="modalContent" class="space-y-4 text-sm text-gray-300">
-                <!-- بيانات تفصيلية ديناميكية -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal جدولة المقابلة وتغيير الحالة -->
-    <div id="interviewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
-        <div class="card-bg w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-                <h3 class="text-lg font-bold text-amber-400">تحديث الحالة وجدولة المقابلة</h3>
-                <button onclick="closeModal('interviewModal')" class="text-gray-400 hover:text-white font-bold text-lg">✕</button>
-            </div>
-            <input type="hidden" id="currentAppId">
-            <input type="hidden" id="currentAppPhone">
-            <input type="hidden" id="currentAppName">
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-gray-400">حالة الطلب</label>
-                    <select id="updateStatusSelect" class="w-full px-3 py-2 rounded-lg border text-sm">
-                        <option value="قيد المراجعة">قيد المراجعة</option>
-                        <option value="تم القبول للمقابلة">تم القبول للمقابلة</option>
-                        <option value="مرفوض">مرفوض</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-gray-400">تاريخ ووقت المقابلة الشخصية</label>
-                    <input type="datetime-local" id="interviewDateTime" class="w-full px-3 py-2 rounded-lg border text-sm">
-                </div>
-                <button onclick="saveInterviewAndStatus()" class="w-full brand-btn py-3 rounded-xl font-bold text-sm shadow">
-                    حفظ وتحديث وإرسال واتساب 📱
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- كود JavaScript للتشغيل والتحكم والتنبيهات الصوتية -->
-    <script>
+<script>
         const SUPABASE_URL = 'https://csroadhvynbsksqncrur.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allApplications = [];
 
-        // التحقق من الجلسة عند التحميل وتفعيل نظام الاستماع اللحظي
         window.addEventListener('DOMContentLoaded', () => {
             if (sessionStorage.getItem('auth_session') === 'active') {
                 document.getElementById('loginScreen').style.display = 'none';
@@ -205,7 +36,6 @@
             window.location.href = 'index.html';
         }
 
-        // تشغيل تنبيه صوتي عند وصول متقدم جديد (Web Audio API)
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -213,8 +43,8 @@
                 const gainNode = audioCtx.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); // A5
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); 
 
                 gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
@@ -225,11 +55,10 @@
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.6);
             } catch (e) {
-                console.log('Audio playback prevented or not supported', e);
+                console.log('Audio playback prevented', e);
             }
         }
 
-        // إظهار إشعار Toast متحرك
         function showToast(message) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -244,21 +73,23 @@
             }, 6000);
         }
 
-        // الاستماع الفوري لإدخالات الجدول الجديدة في Supabase
         function initRealtimeListener() {
             _supabase
-                .channel('public:job_applications')
+                .channel('public:job_applications_live')
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'job_applications' },
                     (payload) => {
+                        console.log('New application detected:', payload);
                         playNotificationSound();
                         const newApp = payload.new;
                         showToast(`🔔 متقدم جديد: ${newApp.name_in_full} (${newApp.job_applied_for || 'وظيفة جديدة'})`);
-                        loadApplications(); // إعادة تحميل الجدول تلقائياً
+                        loadApplications();
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('Realtime Status:', status);
+                });
         }
 
         async function loadApplications() {
@@ -542,5 +373,3 @@
             setTimeout(() => { printWindow.print(); }, 600);
         }
     </script>
-</body>
-</html>
