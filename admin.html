@@ -432,7 +432,12 @@
 
             if (status === 'تم القبول للمقابلة' && interviewDate) {
                 let formattedDate = new Date(interviewDate).toLocaleString('ar-EG');
-                let waMessage = `مرحباً الأستاذ/ة ${name}،\nنحيطك علماً بأنه تم قبول طلبك المبدئي للعمل في فروع (بن الغرباوي).\nتم تحديد موعد المقابلة الشخصية بتاريخ: ${formattedDate}.\nنتمنى لك التوفيق!`;
+                
+                // رابط اللوكيشن المُضاف:
+                let locationUrl = "https://maps.app.goo.gl/2D2yoNxWvHxWcsQG7"; 
+
+                let waMessage = `مرحباً الأستاذ/ة ${name}،\n\nنحيطك علماً بأنه تم قبول طلبك المبدئي للعمل في فروع (بن الغرباوي).\n\n📅 تم تحديد موعد المقابلة الشخصية بتاريخ:\n${formattedDate}\n\n📍 عنوان مقر المقابلة (اللوكيشن):\n${locationUrl}\n\nنتمنى لك التوفيق!`;
+                
                 let cleanPhone = phone.startsWith('0') ? '2' + phone : phone; 
                 window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`, '_blank');
             }
