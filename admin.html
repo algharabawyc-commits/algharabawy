@@ -204,24 +204,39 @@
             window.location.href = 'index.html';
         }
 
+        // دالة التنبيه الصوتي المحدثة (صوت أعلى وواضح برنين مزدوج)
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+                
+                // النغمة الأولى
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'triangle'; 
+                osc1.frequency.setValueAtTime(659.25, audioCtx.currentTime); 
+                gain1.gain.setValueAtTime(0.8, audioCtx.currentTime); 
+                gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start();
+                osc1.stop(audioCtx.currentTime + 0.2);
 
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
-                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); 
+                // النغمة الثانية المزدوجة
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(880, audioCtx.currentTime); 
+                    gain2.gain.setValueAtTime(0.9, audioCtx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.35);
+                }, 150);
 
-                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.6);
             } catch (e) {
                 console.log('Audio playback prevented', e);
             }
