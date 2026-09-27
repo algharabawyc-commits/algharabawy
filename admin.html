@@ -192,7 +192,8 @@
 
         function logout() {
             sessionStorage.clear();
-            window.location.reload();
+            // العودة إلى صفحة البوابة المركزية الرئيسية
+            window.location.href = 'index.html';
         }
 
         async function loadApplications() {
@@ -310,7 +311,6 @@
             document.getElementById('currentAppName').value = name;
             document.getElementById('updateStatusSelect').value = status;
             
-            // تهيئة حقل التاريخ والوقت إذا وجد
             if (interviewDate) {
                 const dateObj = new Date(interviewDate);
                 const tzOffset = dateObj.getTimezoneOffset() * 60000;
@@ -334,7 +334,6 @@
             const status = document.getElementById('updateStatusSelect').value;
             const interviewDate = document.getElementById('interviewDateTime').value;
 
-            // تحديث قاعدة البيانات في Supabase
             const { error } = await _supabase
                 .from('job_applications')
                 .update({ 
@@ -352,7 +351,6 @@
             closeModal('interviewModal');
             loadApplications();
 
-            // إرسال تذكير تلقائي عبر واتساب إذا كانت الحالة "تم القبول للمقابلة"
             if (status === 'تم القبول للمقابلة' && interviewDate) {
                 let formattedDate = new Date(interviewDate).toLocaleString('ar-EG');
                 let waMessage = `مرحباً الأستاذ/ة ${name}،\nنحيطك علماً بأنه تم قبول طلبك المبدئي للعمل في فروع (بن الغرباوي).\nتم تحديد موعد المقابلة الشخصية بتاريخ: ${formattedDate}.\nنتمنى لك التوفيق!`;
