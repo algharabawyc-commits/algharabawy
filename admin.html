@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بن الغرباوي - لوحة متابعة طلبات التوظيف</title>
+    <title>بن الغرباوي - لوحة تحكم طلبات التوظيف</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client -->
@@ -11,13 +11,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #121212; color: #e5e7eb; }
-        .card { background-color: #1e1e1e; border: 1px solid #2d2d2d; transition: 0.3s; }
-        .card:hover { border-color: #C5A059; }
-        input { background-color: #2a2a2a !important; border-color: #3f3f3f !important; color: white !important; }
-        input:focus { border-color: #C5A059 !important; outline: none; }
+        .card-bg { background-color: #1e1e1e; border: 1px solid #2d2d2d; }
+        .brand-btn { background-color: #4A2E18; color: #fff; transition: 0.3s; }
+        .brand-btn:hover { background-color: #5c391f; }
+        input, select { background-color: #2a2a2a !important; border-color: #3f3f3f !important; color: white !important; }
+        input:focus, select:focus { border-color: #C5A059 !important; outline: none; }
     </style>
 </head>
-<body class="min-h-screen py-10 px-4">
+<body class="min-h-screen py-6 px-4">
 
     <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="fixed inset-0 bg-[#121212] flex items-center justify-center z-50 p-4">
@@ -29,7 +30,7 @@
             <p class="text-xs text-gray-400 mb-6">يرجى إدخال كلمة المرور للوصول إلى لوحة طلبات بن الغرباوي</p>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <input type="password" id="adminPassword" required placeholder="كلمة المرور..." class="w-full px-4 py-3 rounded-xl border text-sm text-center">
-                <button type="submit" class="w-full bg-[#4A2E18] hover:bg-[#5c391f] text-amber-300 py-3 rounded-xl text-sm font-bold transition border border-amber-600/30 shadow-md">
+                <button type="submit" class="w-full brand-btn py-3 rounded-xl text-sm font-bold border border-amber-600/30 shadow-md">
                     دخول لوحة التحكم
                 </button>
                 <p id="loginError" class="text-red-400 text-xs hidden font-semibold">كلمة المرور غير صحيحة، حاول مرة أخرى.</p>
@@ -37,38 +38,134 @@
         </div>
     </div>
 
-    <!-- لوحة التحكم -->
-    <div id="dashboardContent" class="hidden container mx-auto max-w-5xl">
+    <!-- لوحة التحكم الرئيسية -->
+    <div id="dashboardContent" class="hidden container mx-auto max-w-7xl">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-center bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 mb-8 shadow-2xl gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-amber-500">طلبات التوظيف المقدمة</h1>
-                <p class="text-xs text-gray-400 mt-1">عرض ومتابعة طلبات شركة بن الغرباوي شاملة الخبرات والبيانات والسير الذاتية</p>
+        <div class="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 mb-6 shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-amber-500">لوحة تحكم طلبات التوظيف</h1>
+                    <p class="text-xs text-gray-400 mt-1">بن الغرباوي - إدارة المتقدمين والفرز والمقابلات الشخصية</p>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="logout()" class="bg-red-900/40 hover:bg-red-900/60 text-red-300 px-4 py-2.5 rounded-xl text-sm font-semibold transition border border-red-700/30 shadow-md">
-                    🚪 العودة للبوابة المركزية
+            <div class="flex flex-wrap gap-2">
+                <button onclick="logout()" class="bg-red-900/40 hover:bg-red-900/60 text-red-300 px-4 py-2 rounded-xl text-xs font-semibold transition border border-red-700/30">
+                    🚪 تسجيل الخروج
                 </button>
-                <button onclick="loadApplications()" class="bg-[#4A2E18] hover:bg-[#5c391f] text-amber-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition border border-amber-600/30 shadow-md">
-                    🔄 تحديث الطلبات
+                <button onclick="loadApplications()" class="brand-btn px-4 py-2 rounded-xl text-xs font-bold shadow">
+                    🔄 تحديث البيانات
                 </button>
             </div>
         </div>
 
-        <!-- Applications Container -->
-        <div id="loading" class="text-center py-10 text-gray-400">جاري تحميل الطلبات...</div>
-        <div id="appsList" class="grid grid-cols-1 gap-6"></div>
+        <!-- أشرطة البحث والفلترة المتقدمة -->
+        <div class="card-bg rounded-2xl p-4 mb-6 shadow-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-400">بحث بالاسم أو الهاتف</label>
+                <input type="text" id="searchBox" onkeyup="filterData()" placeholder="اكتب للبحث..." class="w-full px-3 py-2 rounded-lg border text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب الوظيفة</label>
+                <input type="text" id="filterJob" onkeyup="filterData()" placeholder="مثال: باريستا، كاشير..." class="w-full px-3 py-2 rounded-lg border text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب التقدير</label>
+                <select id="filterGrade" onchange="filterData()" class="w-full px-3 py-2 rounded-lg border text-sm">
+                    <option value="">كل التقديرات</option>
+                    <option value="امتياز">امتياز</option>
+                    <option value="جيد جداً">جيد جداً</option>
+                    <option value="جيد">جيد</option>
+                    <option value="مقبول">مقبول</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-gray-400">تصفية حسب الحالة</label>
+                <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 rounded-lg border text-sm">
+                    <option value="">كل الحالات</option>
+                    <option value="قيد المراجعة">قيد المراجعة</option>
+                    <option value="تم القبول للمقابلة">تم القبول للمقابلة</option>
+                    <option value="مرفوض">مرفوض</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- جدول المتقدمين -->
+        <div class="card-bg rounded-2xl shadow-xl overflow-hidden">
+            <div id="loading" class="text-center py-10 text-gray-400">جاري تحميل الطلبات...</div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-[#252525] text-amber-400 border-b border-gray-800 text-xs">
+                            <th class="p-3">المتقدم</th>
+                            <th class="p-3">الوظيفة</th>
+                            <th class="p-3">الهاتف</th>
+                            <th class="p-3">المؤهل والتقدير</th>
+                            <th class="p-3">الحالة</th>
+                            <th class="p-3">ميعاد المقابلة</th>
+                            <th class="p-3 text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appTableBody" class="divide-y divide-gray-800 text-xs">
+                        <!-- يتم تعبئتها ديناميكياً -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Script النظام -->
+    <!-- Modal عرض التفاصيل الكاملة للمتقدم -->
+    <div id="detailsModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+        <div class="card-bg w-full max-w-3xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h3 class="text-lg font-bold text-amber-400">الملف الشخصي الكامل للمتقدم</h3>
+                <button onclick="closeModal('detailsModal')" class="text-gray-400 hover:text-white font-bold text-lg">✕</button>
+            </div>
+            <div id="modalContent" class="space-y-4 text-sm text-gray-300">
+                <!-- بيانات تفصيلية ديناميكية -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal جدولة المقابلة وتغيير الحالة -->
+    <div id="interviewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+        <div class="card-bg w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h3 class="text-lg font-bold text-amber-400">تحديث الحالة وجدولة المقابلة</h3>
+                <button onclick="closeModal('interviewModal')" class="text-gray-400 hover:text-white font-bold text-lg">✕</button>
+            </div>
+            <input type="hidden" id="currentAppId">
+            <input type="hidden" id="currentAppPhone">
+            <input type="hidden" id="currentAppName">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-gray-400">حالة الطلب</label>
+                    <select id="updateStatusSelect" class="w-full px-3 py-2 rounded-lg border text-sm">
+                        <option value="قيد المراجعة">قيد المراجعة</option>
+                        <option value="تم القبول للمقابلة">تم القبول للمقابلة</option>
+                        <option value="مرفوض">مرفوض</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1 text-gray-400">تاريخ ووقت المقابلة الشخصية</label>
+                    <input type="datetime-local" id="interviewDateTime" class="w-full px-3 py-2 rounded-lg border text-sm">
+                </div>
+                <button onclick="saveInterviewAndStatus()" class="w-full brand-btn py-3 rounded-xl font-bold text-sm shadow">
+                    حفظ وتحديث وإرسال واتساب 📱
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- كود JavaScript للتشغيل والتحكم -->
     <script>
         const SUPABASE_URL = 'https://csroadhvynbsksqncrur.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
-
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let applicationsData = [];
 
-        // التحقق من الدخول التلقائي
+        let allApplications = [];
+
+        // التحقق من الجلسة عند التحميل
         window.addEventListener('DOMContentLoaded', () => {
             if (sessionStorage.getItem('auth_session') === 'active') {
                 document.getElementById('loginScreen').style.display = 'none';
@@ -95,16 +192,15 @@
 
         function logout() {
             sessionStorage.clear();
-            // الانتقال إلى البوابة المركزية (قم بتغيير 'index.html' إلى اسم صفحة البوابة لديك إذا كانت مختلفة)
-            window.location.href = 'index.html';
+            window.location.reload();
         }
 
         async function loadApplications() {
-            const listDiv = document.getElementById('appsList');
+            const tbody = document.getElementById('appTableBody');
             const loadingDiv = document.getElementById('loading');
             
             loadingDiv.style.display = 'block';
-            listDiv.innerHTML = '';
+            tbody.innerHTML = '';
 
             const { data, error } = await _supabase
                 .from('job_applications')
@@ -114,74 +210,158 @@
             loadingDiv.style.display = 'none';
 
             if (error) {
-                alert('حدث خطأ أثناء تحميل البيانات: ' + error.message);
+                alert('خطأ في جلب البيانات: ' + error.message);
                 return;
             }
 
-            applicationsData = data;
+            allApplications = data || [];
+            renderTable(allApplications);
+        }
 
-            if (applicationsData.length === 0) {
-                listDiv.innerHTML = '<div class="text-center py-10 text-gray-500 bg-[#1e1e1e] rounded-2xl border border-gray-800">لا توجد طلبات توظيف حتى الآن.</div>';
+        function renderTable(data) {
+            const tbody = document.getElementById('appTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-gray-500">لا توجد طلبات مطابقة للبحث أو التصفية.</td></tr>`;
                 return;
             }
 
-            applicationsData.forEach((app, index) => {
-                const date = new Date(app.created_at).toLocaleString('ar-EG');
-                const photoSrc = app.personal_photo ? app.personal_photo : 'https://via.placeholder.com/100?text=No+Photo';
-                
-                // زر الاطلاع على الـ CV إذا كان مرفقاً
-                const cvButton = app.cv_url 
-                    ? `<a href="${app.cv_url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">📄 الاطلاع على الـ CV</a>`
-                    : `<span class="text-xs text-gray-500 bg-[#121212] px-3 py-2 rounded-xl border border-gray-800">لا يوجد CV مرفق</span>`;
+            data.forEach((app, index) => {
+                let statusBadge = '';
+                const currentStatus = app.status || 'قيد المراجعة';
+                if (currentStatus === 'تم القبول للمقابلة') {
+                    statusBadge = '<span class="px-2 py-1 bg-emerald-900/50 text-emerald-300 rounded-md border border-emerald-700">تم القبول للمقابلة</span>';
+                } else if (currentStatus === 'مرفوض') {
+                    statusBadge = '<span class="px-2 py-1 bg-red-900/50 text-red-300 rounded-md border border-red-700">مرفوض</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-1 bg-amber-900/50 text-amber-300 rounded-md border border-amber-700">قيد المراجعة</span>';
+                }
 
-                const card = document.createElement('div');
-                card.className = 'card rounded-2xl p-6 shadow-lg';
-                card.innerHTML = `
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 mb-4 gap-4">
-                        <div class="flex items-center gap-4">
-                            <img src="${photoSrc}" alt="صورة المتقدم" class="w-16 h-16 rounded-xl object-cover border border-amber-600/40 bg-black shrink-0">
-                            <div>
-                                <span class="bg-amber-500/10 text-amber-400 text-xs px-3 py-1 rounded-full border border-amber-500/20 font-semibold">متقدم لوظيفة: ${app.job_applied_for || 'غير محدد'}</span>
-                                <h2 class="text-xl font-bold text-white mt-2">${app.name_in_full}</h2>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-xs text-gray-400 ml-2">📅 ${date}</span>
-                            ${cvButton}
-                            <button onclick="printApplication(${index})" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">
-                                🖨️ طباعة الطلب
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300 mb-4">
-                        <div>📞 <strong>الهاتف:</strong> <a href="tel:${app.telephone_no}" class="text-amber-400 hover:underline">${app.telephone_no}</a></div>
-                        <div>📍 <strong>العنوان:</strong> ${app.local_address}</div>
-                        <div>🆔 <strong>الرقم القومي:</strong> ${app.national_id_no || 'غير متوفر'}</div>
-                        <div>🎓 <strong>المؤهل:</strong> ${app.certificate_degree || '-'} (${app.certificate_major || '-'})</div>
-                        <div>⭐ <strong>التقدير:</strong> ${app.certificate_grade || '-'}</div>
-                        <div>🏛️ <strong>الجامعة:</strong> ${app.university_school || '-'} (${app.year_passed || '-'})</div>
-                    </div>
-
-                    <div class="bg-[#121212] p-4 rounded-xl text-xs text-gray-300 border border-gray-800 space-y-2 mb-3">
-                        <div class="font-bold text-amber-400 mb-1">💼 الخبرات العملية المسجلة:</div>
-                        <div>1- الوظيفة: ${app.exp_position_1 || '-'} | الجهة: ${app.exp_employer_1 || '-'} | الراتب: ${app.exp_salary_1 || '-'}</div>
-                        <div>2- الوظيفة: ${app.exp_position_2 || '-'} | الجهة: ${app.exp_employer_2 || '-'} | الراتب: ${app.exp_salary_2 || '-'}</div>
-                    </div>
-
-                    <div class="bg-[#121212] p-3 rounded-xl text-xs text-gray-400 flex flex-wrap justify-between items-center border border-gray-800 gap-2">
-                        <span>الديانة: ${app.religion || '-'}</span>
-                        <span>الحالة الاجتماعية: ${app.marital_status || '-'}</span>
-                        <span>الجنس: ${app.sex || '-'}</span>
-                        <span>اللغات: ${app.languages_known || '-'}</span>
-                    </div>
+                let tr = document.createElement('tr');
+                tr.className = 'hover:bg-[#252525] transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-white flex items-center gap-2">
+                        ${app.personal_photo ? `<img src="${app.personal_photo}" class="w-8 h-8 rounded-full object-cover border border-amber-600/40">` : `<div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-[10px]">بدون</div>`}
+                        ${app.name_in_full}
+                    </td>
+                    <td class="p-3 text-amber-200">${app.job_applied_for || 'غير محدد'}</td>
+                    <td class="p-3 font-mono"><a href="tel:${app.telephone_no}" class="hover:underline text-amber-400">${app.telephone_no}</a></td>
+                    <td class="p-3">${app.certificate_degree || '-'} (${app.certificate_grade || '-'})</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3 text-gray-300">${app.interview_date ? new Date(app.interview_date).toLocaleString('ar-EG') : 'لم تحدد'}</td>
+                    <td class="p-3 text-center space-x-1 space-x-reverse">
+                        <button onclick='viewDetails(${JSON.stringify(app)})' class="bg-blue-900/60 text-blue-200 px-2.5 py-1 rounded-lg border border-blue-700 hover:bg-blue-800">عرض</button>
+                        <button onclick='openInterviewModal("${app.id}", "${app.telephone_no}", "${app.name_in_full}", "${currentStatus}", "${app.interview_date || ''}")' class="bg-amber-900/60 text-amber-200 px-2.5 py-1 rounded-lg border border-amber-700 hover:bg-amber-800">إدارة</button>
+                        ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" class="bg-emerald-900/60 text-emerald-200 px-2.5 py-1 rounded-lg border border-emerald-700 inline-block hover:bg-emerald-800">CV</a>` : ''}
+                        <button onclick='printApplicationRecord(${JSON.stringify(app)})' class="bg-purple-900/60 text-purple-200 px-2.5 py-1 rounded-lg border border-purple-700 hover:bg-purple-800">طباعة</button>
+                    </td>
                 `;
-                listDiv.appendChild(card);
+                tbody.appendChild(tr);
             });
         }
 
-        function printApplication(index) {
-            const app = applicationsData[index];
+        function filterData() {
+            const search = document.getElementById('searchBox').value.toLowerCase();
+            const jobFilter = document.getElementById('filterJob').value.toLowerCase();
+            const gradeFilter = document.getElementById('filterGrade').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+
+            const filtered = allApplications.filter(app => {
+                const matchSearch = app.name_in_full.toLowerCase().includes(search) || app.telephone_no.includes(search);
+                const matchJob = (app.job_applied_for || '').toLowerCase().includes(jobFilter);
+                const matchGrade = gradeFilter === '' || app.certificate_grade === gradeFilter;
+                const matchStatus = statusFilter === '' || (app.status || 'قيد المراجعة') === statusFilter;
+                return matchSearch && matchJob && matchGrade && matchStatus;
+            });
+
+            renderTable(filtered);
+        }
+
+        function viewDetails(app) {
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#121212] p-4 rounded-xl border border-gray-800">
+                    <p><b>الاسم الكامل:</b> ${app.name_in_full}</p>
+                    <p><b>الوظيفة المتقدم لها:</b> ${app.job_applied_for || '-'}</p>
+                    <p><b>رقم الهاتف / واتساب:</b> ${app.telephone_no}</p>
+                    <p><b>الرقم القومي:</b> ${app.national_id_no || 'غير متوفر'}</p>
+                    <p><b>العنوان الحالي:</b> ${app.local_address || '-'}</p>
+                    <p><b>تاريخ الميلاد:</b> ${app.date_of_birth || 'غير متوفر'}</p>
+                    <p><b>الحالة الاجتماعية:</b> ${app.marital_status || '-'}</p>
+                    <p><b>الديانة والجنس:</b> ${app.religion || '-'} / ${app.sex || '-'}</p>
+                    <p><b>الشهادة والتقدير:</b> ${app.certificate_degree || ''} - ${app.certificate_grade || ''} (${app.certificate_major || ''})</p>
+                    <p><b>الجامعة / المدرسة:</b> ${app.university_school || '-'} (${app.year_passed || '-'})</p>
+                    <p><b>هل يعمل حالياً:</b> ${app.currently_employed || 'لا'}</p>
+                    <p><b>اللغات:</b> ${app.languages_known || '-'}</p>
+                </div>
+                <div class="mt-4 bg-[#121212] p-4 rounded-xl border border-gray-800">
+                    <h4 class="font-bold text-amber-400 mb-2">الخبرات العملية المسجلة:</h4>
+                    <p><b>1- الوظيفة:</b> ${app.exp_position_1 || '-'} | الجهة: ${app.exp_employer_1 || '-'} | الراتب: ${app.exp_salary_1 || '-'}</p>
+                    <p class="mt-1"><b>2- الوظيفة:</b> ${app.exp_position_2 || '-'} | الجهة: ${app.exp_employer_2 || '-'} | الراتب: ${app.exp_salary_2 || '-'}</p>
+                </div>
+            `;
+            document.getElementById('detailsModal').classList.remove('hidden');
+        }
+
+        function openInterviewModal(id, phone, name, status, interviewDate) {
+            document.getElementById('currentAppId').value = id;
+            document.getElementById('currentAppPhone').value = phone;
+            document.getElementById('currentAppName').value = name;
+            document.getElementById('updateStatusSelect').value = status;
+            
+            // تهيئة حقل التاريخ والوقت إذا وجد
+            if (interviewDate) {
+                const dateObj = new Date(interviewDate);
+                const tzOffset = dateObj.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dateObj - tzOffset)).toISOString().slice(0, 16);
+                document.getElementById('interviewDateTime').value = localISOTime;
+            } else {
+                document.getElementById('interviewDateTime').value = '';
+            }
+
+            document.getElementById('interviewModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        async function saveInterviewAndStatus() {
+            const id = document.getElementById('currentAppId').value;
+            const phone = document.getElementById('currentAppPhone').value;
+            const name = document.getElementById('currentAppName').value;
+            const status = document.getElementById('updateStatusSelect').value;
+            const interviewDate = document.getElementById('interviewDateTime').value;
+
+            // تحديث قاعدة البيانات في Supabase
+            const { error } = await _supabase
+                .from('job_applications')
+                .update({ 
+                    status: status, 
+                    interview_date: interviewDate ? interviewDate : null 
+                })
+                .eq('id', id);
+
+            if (error) {
+                alert('حدث خطأ أثناء التحديث: ' + error.message);
+                return;
+            }
+
+            alert('تم تحديث حالة الطلب وموعد المقابلة بنجاح!');
+            closeModal('interviewModal');
+            loadApplications();
+
+            // إرسال تذكير تلقائي عبر واتساب إذا كانت الحالة "تم القبول للمقابلة"
+            if (status === 'تم القبول للمقابلة' && interviewDate) {
+                let formattedDate = new Date(interviewDate).toLocaleString('ar-EG');
+                let waMessage = `مرحباً الأستاذ/ة ${name}،\nنحيطك علماً بأنه تم قبول طلبك المبدئي للعمل في فروع (بن الغرباوي).\nتم تحديد موعد المقابلة الشخصية بتاريخ: ${formattedDate}.\nنتمنى لك التوفيق!`;
+                let cleanPhone = phone.startsWith('0') ? '2' + phone : phone; 
+                window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`, '_blank');
+            }
+        }
+
+        function printApplicationRecord(app) {
             const printWindow = window.open('', '_blank');
             const photoSrc = app.personal_photo ? app.personal_photo : '';
             
@@ -216,7 +396,7 @@
 
                     <div style="margin-bottom: 12px; font-size: 14px; font-weight: bold; background: #fff8e1; padding: 6px; border: 1px solid #ffe082; display: flex; justify-content: space-between;">
                         <span>الوظيفة المتقدم لها: <span style="color: #b71c1c;">${app.job_applied_for || 'غير محدد'}</span></span>
-                        ${app.cv_url ? `<span>مرفق سيرة ذاتية (CV)</span>` : ''}
+                        <span>حالة الطلب: ${app.status || 'قيد المراجعة'}</span>
                     </div>
 
                     <h2>البيانات الشخصية (Personnel Data)</h2>
@@ -236,10 +416,6 @@
                         <tr>
                             <th>الرقم القومي</th><td>${app.national_id_no || ''}</td>
                             <th>رقم جواز السفر</th><td>${app.passport_no || ''}</td>
-                        </tr>
-                        <tr>
-                            <th>رخصة القيادة</th><td>${app.license_no || ''}</td>
-                            <th>نوع الرخصة / الانتهاء</th><td>${app.license_type || ''} (${app.license_expiry_date || ''})</td>
                         </tr>
                     </table>
 
@@ -261,7 +437,6 @@
                             <th>التقدير (Grade)</th>
                             <th>التخصص (Major)</th>
                             <th>الجامعة / المدرسة</th>
-                            <th>البلد</th>
                             <th>سنة التخرج</th>
                         </tr>
                         <tr>
@@ -269,7 +444,6 @@
                             <td>${app.certificate_grade || '-'}</td>
                             <td>${app.certificate_major || '-'}</td>
                             <td>${app.university_school || '-'}</td>
-                            <td>${app.country || '-'}</td>
                             <td>${app.year_passed || '-'}</td>
                         </tr>
                     </table>
@@ -282,7 +456,6 @@
                             <th>تاريخ الالتحاق</th>
                             <th>تاريخ ترك العمل</th>
                             <th>الراتب</th>
-                            <th>سبب الترك</th>
                         </tr>
                         <tr>
                             <td>${app.exp_position_1 || '-'}</td>
@@ -290,43 +463,8 @@
                             <td>${app.exp_joining_1 || '-'}</td>
                             <td>${app.exp_leave_1 || '-'}</td>
                             <td>${app.exp_salary_1 || '-'}</td>
-                            <td>${app.exp_reason_1 || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td>${app.exp_position_2 || '-'}</td>
-                            <td>${app.exp_employer_2 || '-'}</td>
-                            <td>${app.exp_joining_2 || '-'}</td>
-                            <td>${app.exp_leave_2 || '-'}</td>
-                            <td>${app.exp_salary_2 || '-'}</td>
                         </tr>
                     </table>
-
-                    <h2>الأشخاص يمكن الرجوع إليهم (References)</h2>
-                    <table>
-                        <tr>
-                            <th>الاسم</th>
-                            <th>صلة القرابة / العمل</th>
-                            <th>رقم التليفون</th>
-                            <th>العنوان</th>
-                        </tr>
-                        <tr>
-                            <td>${app.ref_name_1 || '-'}</td>
-                            <td>${app.ref_relation_1 || '-'}</td>
-                            <td>${app.ref_tel_1 || '-'}</td>
-                            <td>${app.ref_address_1 || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td>${app.ref_name_2 || '-'}</td>
-                            <td>${app.ref_relation_2 || '-'}</td>
-                            <td>${app.ref_tel_2 || '-'}</td>
-                            <td>${app.ref_address_2 || '-'}</td>
-                        </tr>
-                    </table>
-
-                    <h2>اللغات (Languages Known)</h2>
-                    <div style="border: 1px solid #ccc; padding: 6px; font-size: 11px; background: #faf8f5;">
-                        ${app.languages_known || 'غير محدد'}
-                    </div>
 
                     <div class="footer">
                         <div>توقيع الموظف المسؤول: ........................</div>
@@ -338,10 +476,7 @@
 
             printWindow.document.write(htmlContent);
             printWindow.document.close();
-            
-            setTimeout(() => {
-                printWindow.print();
-            }, 600);
+            setTimeout(() => { printWindow.print(); }, 600);
         }
     </script>
 </body>
