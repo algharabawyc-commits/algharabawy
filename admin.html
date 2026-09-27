@@ -16,9 +16,17 @@
         .brand-btn:hover { background-color: #5c391f; }
         input, select { background-color: #2a2a2a !important; border-color: #3f3f3f !important; color: white !important; }
         input:focus, select:focus { border-color: #C5A059 !important; outline: none; }
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate { animation: slideIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="min-h-screen py-6 px-4">
+
+    <!-- حاوية الإشعارات اللحظية (Toast) -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4 pointer-events-none"></div>
 
     <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="fixed inset-0 bg-[#121212] flex items-center justify-center z-50 p-4">
@@ -157,7 +165,7 @@
         </div>
     </div>
 
-    <!-- كود JavaScript للتشغيل والتحكم -->
+    <!-- كود JavaScript للتشغيل والتحكم والتنبيهات الصوتية -->
     <script>
         const SUPABASE_URL = 'https://csroadhvynbsksqncrur.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
@@ -165,12 +173,13 @@
 
         let allApplications = [];
 
-        // التحقق من الجلسة عند التحميل
+        // التحقق من الجلسة عند التحميل وتفعيل نظام الاستماع اللحظي
         window.addEventListener('DOMContentLoaded', () => {
             if (sessionStorage.getItem('auth_session') === 'active') {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
                 loadApplications();
+                initRealtimeListener();
             }
         });
 
@@ -184,6 +193,7 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
                 loadApplications();
+                initRealtimeListener();
             } else {
                 errorMsg.classList.remove('hidden');
                 document.getElementById('adminPassword').value = '';
@@ -192,8 +202,63 @@
 
         function logout() {
             sessionStorage.clear();
-            // العودة إلى صفحة البوابة المركزية الرئيسية
             window.location.href = 'index.html';
+        }
+
+        // تشغيل تنبيه صوتي عند وصول متقدم جديد (Web Audio API)
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2); // A5
+
+                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.6);
+            } catch (e) {
+                console.log('Audio playback prevented or not supported', e);
+            }
+        }
+
+        // إظهار إشعار Toast متحرك
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-animate bg-amber-500 text-black font-bold px-4 py-3 rounded-xl shadow-2xl border border-amber-300 flex items-center justify-between pointer-events-auto text-sm';
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 text-black hover:opacity-70 font-bold">✕</button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 6000);
+        }
+
+        // الاستماع الفوري لإدخالات الجدول الجديدة في Supabase
+        function initRealtimeListener() {
+            _supabase
+                .channel('public:job_applications')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'job_applications' },
+                    (payload) => {
+                        playNotificationSound();
+                        const newApp = payload.new;
+                        showToast(`🔔 متقدم جديد: ${newApp.name_in_full} (${newApp.job_applied_for || 'وظيفة جديدة'})`);
+                        loadApplications(); // إعادة تحميل الجدول تلقائياً
+                    }
+                )
+                .subscribe();
         }
 
         async function loadApplications() {
@@ -228,7 +293,7 @@
                 return;
             }
 
-            data.forEach((app, index) => {
+            data.forEach((app) => {
                 let statusBadge = '';
                 const currentStatus = app.status || 'قيد المراجعة';
                 if (currentStatus === 'تم القبول للمقابلة') {
