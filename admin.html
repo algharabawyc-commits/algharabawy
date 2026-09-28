@@ -57,12 +57,32 @@
                 </div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button onclick="logout()" class="bg-red-900/40 hover:bg-red-900/60 text-red-300 px-4 py-2 rounded-xl text-xs font-semibold transition border border-red-700/30">
-                    🚪 تسجيل الخروج
-                </button>
                 <button onclick="loadApplications()" class="brand-btn px-4 py-2 rounded-xl text-xs font-bold shadow">
                     🔄 تحديث البيانات
                 </button>
+                <button onclick="logout()" class="bg-red-900/40 hover:bg-red-900/60 text-red-300 px-4 py-2 rounded-xl text-xs font-semibold transition border border-red-700/30">
+                    🚪 خروج
+                </button>
+            </div>
+        </div>
+
+        <!-- بطاقات الإحصائيات السريعة -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="card-bg p-4 rounded-2xl shadow-lg border-l-4 border-amber-500">
+                <p class="text-xs text-gray-400">إجمالي الطلبات</p>
+                <h3 id="statTotal" class="text-2xl font-bold text-white mt-1">0</h3>
+            </div>
+            <div class="card-bg p-4 rounded-2xl shadow-lg border-l-4 border-amber-600">
+                <p class="text-xs text-gray-400">قيد المراجعة</p>
+                <h3 id="statPending" class="text-2xl font-bold text-amber-300 mt-1">0</h3>
+            </div>
+            <div class="card-bg p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
+                <p class="text-xs text-gray-400">تم القبول للمقابلة</p>
+                <h3 id="statAccepted" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            </div>
+            <div class="card-bg p-4 rounded-2xl shadow-lg border-l-4 border-red-500">
+                <p class="text-xs text-gray-400">مرفوض</p>
+                <h3 id="statRejected" class="text-2xl font-bold text-red-400 mt-1">0</h3>
             </div>
         </div>
 
@@ -293,7 +313,20 @@
             }
 
             allApplications = data || [];
+            updateStats(allApplications);
             renderTable(allApplications);
+        }
+
+        function updateStats(data) {
+            const total = data.length;
+            const pending = data.filter(app => (app.status || 'قيد المراجعة') === 'قيد المراجعة').length;
+            const accepted = data.filter(app => app.status === 'تم القبول للمقابلة').length;
+            const rejected = data.filter(app => app.status === 'مرفوض').length;
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statPending').innerText = pending;
+            document.getElementById('statAccepted').innerText = accepted;
+            document.getElementById('statRejected').innerText = rejected;
         }
 
         function renderTable(data) {
@@ -366,6 +399,8 @@
                     <p><b>الرقم القومي:</b> ${app.national_id_no || 'غير متوفر'}</p>
                     <p><b>العنوان الحالي:</b> ${app.local_address || '-'}</p>
                     <p><b>تاريخ الميلاد:</b> ${app.date_of_birth || 'غير متوفر'}</p>
+                    <p><b>العمر:</b> ${app.age || 'غير متوفر'}</p>
+                    <p><b>الموقف من التجنيد:</b> ${app.military_service || '-'}</p>
                     <p><b>الحالة الاجتماعية:</b> ${app.marital_status || '-'}</p>
                     <p><b>الديانة والجنس:</b> ${app.religion || '-'} / ${app.sex || '-'}</p>
                     <p><b>الشهادة والتقدير:</b> ${app.certificate_degree || ''} - ${app.certificate_grade || ''} (${app.certificate_major || ''})</p>
@@ -430,8 +465,6 @@
 
             if (status === 'تم القبول للمقابلة' && interviewDate) {
                 let formattedDate = new Date(interviewDate).toLocaleString('ar-EG');
-                
-                // تم إدراج العنوان النصي مع اللوكيشن:
                 let locationUrl = "https://maps.app.goo.gl/2D2yoNxWvHxWcsQG7"; 
                 let addressDetails = "24 رويال تاور - آخر شارع الخمسين - زهراء المعادي - أمام كنيسة الأنبا أنطونيوس - أسفل العمارة كافيه كاريبو";
 
@@ -442,6 +475,7 @@
             }
         }
 
+        // تم إزالة رقم جواز السفر من نموذج الطباعة هنا
         function printApplicationRecord(app) {
             const printWindow = window.open('', '_blank');
             const photoSrc = app.personal_photo ? app.personal_photo : '';
@@ -488,15 +522,18 @@
                         </tr>
                         <tr>
                             <th>تاريخ الميلاد</th><td>${app.date_of_birth || ''}</td>
+                            <th>العمر</th><td>${app.age || ''} سنة</td>
+                        </tr>
+                        <tr>
                             <th>الديانة</th><td>${app.religion || ''}</td>
-                        </tr>
-                        <tr>
                             <th>الجنس</th><td>${app.sex || ''}</td>
-                            <th>الحالة الاجتماعية</th><td>${app.marital_status || ''}</td>
                         </tr>
                         <tr>
-                            <th>الرقم القومي</th><td>${app.national_id_no || ''}</td>
-                            <th>رقم جواز السفر</th><td>${app.passport_no || ''}</td>
+                            <th>الحالة الاجتماعية</th><td>${app.marital_status || ''}</td>
+                            <th>الموقف من التجنيد</th><td>${app.military_service || ''}</td>
+                        </tr>
+                        <tr>
+                            <th>الرقم القومي</th><td colspan="3">${app.national_id_no || ''}</td>
                         </tr>
                     </table>
 
