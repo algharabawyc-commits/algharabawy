@@ -13,7 +13,7 @@
     </script>
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS for Excel Reading -->
+    <!-- SheetJS for Excel Reading and Writing -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,7 +25,6 @@
     <!-- Login Modal (Appears if not logged in) -->
     <div id="loginModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-md p-8 shadow-2xl transition-colors duration-300 text-center">
-            <!-- تم تكبير حجم حاوية الشعار بشكل كبير جداً -->
             <div class="w-44 h-44 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl overflow-hidden bg-white p-2 border-2 border-amber-500/30">
                 <img src="https://i.postimg.cc/LshDFtny/logo-01.png" alt="شعار بن الغرباوي" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='☕'">
             </div>
@@ -58,7 +57,6 @@
     <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-md py-4 px-6 mb-8 transition-colors duration-300">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <!-- تم تكبير حجم حاوية الشعار في الهيدر أيضاً -->
                 <div class="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white p-1.5 border border-amber-500/30">
                     <img src="https://i.postimg.cc/LshDFtny/logo-01.png" alt="شعار بن الغرباوي" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='☕'">
                 </div>
@@ -69,7 +67,6 @@
             </div>
             
             <div class="flex items-center gap-3 flex-wrap justify-center">
-                <!-- Current User Badge -->
                 <div id="userBadge" class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-full text-xs font-bold">
                     حساب: أدمن
                 </div>
@@ -78,7 +75,6 @@
                     🚪 خروج
                 </button>
 
-                <!-- Theme Toggle Button -->
                 <button onclick="toggleTheme()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-amber-400 p-2.5 rounded-xl transition flex items-center gap-2 text-xs font-semibold shadow" title="تبديل الوضع الداكن والفاتح">
                     <span id="themeIcon">☀️</span>
                     <span id="themeText" class="hidden sm:inline">الوضع الفاتح</span>
@@ -94,6 +90,24 @@
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 pb-12">
         
+        <!-- Last Added Employee Banner -->
+        <div class="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-4 mb-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors duration-300">
+            <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
+                <span>✨ آخر موظف تم إضافته:</span>
+                <span id="lastEmpName" class="text-slate-800 dark:text-slate-100 font-semibold bg-amber-50 dark:bg-slate-900 px-3 py-1 rounded-lg border border-amber-200 dark:border-slate-700">-</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                <div class="flex items-center gap-1.5">
+                    <span>رقم البصمة:</span>
+                    <span id="lastEmpBadge" class="font-mono font-bold text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-md">-</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span>الفرع التابع له:</span>
+                    <span id="lastEmpBranch" class="font-bold text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-900 px-2.5 py-1 rounded-md">-</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Controls & Filters -->
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 mb-6 shadow-lg flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-300">
             
@@ -112,14 +126,26 @@
                 </select>
             </div>
 
-            <!-- Actions Buttons (Controlled by Role) -->
+            <!-- Actions Buttons -->
             <div id="adminActionButtons" class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
-                <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg cursor-pointer text-sm">
-                    📁 استيراد شيت
+                <button onclick="openMonthlyMovementsModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg text-xs" title="سجل حركات الموظفين خلال الشهر">
+                    📈 حركات الشهر
+                </button>
+
+                <button onclick="openTerminatedModal()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg text-xs" title="قائمة الموظفين المنتهية خدماتهم">
+                    🚫 إنهاء الخدمة (<span id="terminatedCountBadge">0</span>)
+                </button>
+
+                <button onclick="exportExcel()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg text-xs">
+                    📊 تصدير
+                </button>
+
+                <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg cursor-pointer text-xs">
+                    📁 استيراد
                     <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelImport(event)">
                 </label>
 
-                <button onclick="openModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg text-sm">
+                <button onclick="openModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg text-xs">
                     ➕ موظف جديد
                 </button>
             </div>
@@ -133,7 +159,7 @@
                         <tr class="bg-slate-100 dark:bg-slate-900/80 text-amber-600 dark:text-amber-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                             <th class="py-4 px-4 font-bold">رقم البصمة</th>
                             <th class="py-4 px-4 font-bold">الرقم الوظيفي</th>
-                            <th class="py-4 px-4 font-bold">اسم الموظف</th>
+                            <th class="py-4 px-4 font-bold min-w-[220px]">اسم الموظف</th>
                             <th class="py-4 px-4 font-bold">الفرع</th>
                             <th class="py-4 px-4 font-bold">الوظيفة</th>
                             <th class="py-4 px-4 font-bold">رقم الهاتف</th>
@@ -156,6 +182,139 @@
         </div>
 
     </main>
+
+    <!-- Monthly Movements Modal -->
+    <div id="monthlyMovementsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-4xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                    <span>📈 سجل حركات التنقل لجميع الموظفين (خلال الشهر الحالي)</span>
+                </h3>
+                <button onclick="closeMonthlyMovementsModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
+            </div>
+            <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="py-3 px-4 font-bold">اسم الموظف</th>
+                            <th class="py-3 px-4 font-bold">رقم البصمة</th>
+                            <th class="py-3 px-4 font-bold">من فرع</th>
+                            <th class="py-3 px-4 font-bold">إلى فرع (المنقول إليه)</th>
+                            <th class="py-3 px-4 font-bold">تاريخ ووقت النقل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyMovementsTableBody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-slate-400">جاري تحميل حركات الشهر...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+                <button onclick="closeMonthlyMovementsModal()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-xl text-sm transition">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminated Employees Modal -->
+    <div id="terminatedModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-4xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                    <span>🚫 قائمة الموظفين المنتهية خدماتهم</span>
+                </h3>
+                <button onclick="closeTerminatedModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
+            </div>
+            <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <table class="w-full text-right text-xs">
+                    <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="py-3 px-4 font-bold">رقم البصمة</th>
+                            <th class="py-3 px-4 font-bold">اسم الموظف</th>
+                            <th class="py-3 px-4 font-bold">آخر فرع</th>
+                            <th class="py-3 px-4 font-bold">الوظيفة</th>
+                            <th class="py-3 px-4 font-bold text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="terminatedTableBody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-slate-400">لا توجد سجلات لإنهاء الخدمة</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+                <button onclick="closeTerminatedModal()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-xl text-sm transition">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Profile & Transfer History Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-amber-600 dark:text-amber-500 flex items-center gap-2">
+                    <span>👤 الملف الشخصي وسجل التنقلات</span>
+                </h3>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
+            </div>
+
+            <!-- Profile Info Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div>
+                    <span class="block text-[11px] text-slate-400">اسم الموظف</span>
+                    <span id="profName" class="font-bold text-slate-800 dark:text-slate-100 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-slate-400">رقم البصمة</span>
+                    <span id="profBadge" class="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-slate-400">الرقم الوظيفي</span>
+                    <span id="profCode" class="font-mono text-slate-600 dark:text-slate-300 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-slate-400">الفرع الحالي</span>
+                    <span id="profBranch" class="font-bold text-amber-600 dark:text-amber-400 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-slate-400">الوظيفة</span>
+                    <span id="profRole" class="text-slate-600 dark:text-slate-300 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="block text-[11px] text-slate-400">رقم الهاتف</span>
+                    <span id="profPhone" class="font-mono text-emerald-600 dark:text-emerald-400 text-sm" dir="ltr">-</span>
+                </div>
+            </div>
+
+            <!-- Transfer History Section -->
+            <div>
+                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                    <span>🔄 سجل حركات التنقل بين الفروع</span>
+                </h4>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="py-2.5 px-3 font-bold">من فرع</th>
+                                <th class="py-2.5 px-3 font-bold">إلى فرع (المنقول إليه)</th>
+                                <th class="py-2.5 px-3 font-bold">تاريخ ووقت النقل الفعلي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transferHistoryTableBody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                            <tr>
+                                <td colspan="3" class="text-center py-6 text-slate-400">جاري تحميل سجل التنقلات...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+                <button type="button" onclick="closeProfileModal()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2 rounded-xl text-sm transition">إغلاق</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Add/Edit Employee Modal -->
     <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
@@ -204,11 +363,44 @@
         </div>
     </div>
 
+    <!-- Transfer Employee Modal -->
+    <div id="transferModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl transition-colors duration-300">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-amber-600 dark:text-amber-500">نقل الموظف لفرع آخر</h3>
+                <button onclick="closeTransferModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
+            </div>
+            <input type="hidden" id="transferEmpId">
+            <input type="hidden" id="transferOldBranch">
+            <div class="space-y-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">اسم الموظف</label>
+                    <input type="text" id="transferEmpNameDisplay" disabled class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-600 dark:text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">الفرع الحالي</label>
+                    <input type="text" id="transferCurrentBranchDisplay" disabled class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-600 dark:text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">اختر الفرع الجديد المنقول إليه *</label>
+                    <select id="targetBranchSelect" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                        <option value="">اختر الفرع الجديد...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <button type="button" onclick="closeTransferModal()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm transition">إلغاء</button>
+                <button type="button" onclick="confirmTransfer()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-xl text-sm transition shadow">تأكيد النقل 🚀</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript Logic -->
     <script>
         const SUPABASE_URL = 'https://csroadhvynbsksqncrur.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
         const ADMIN_PASSWORD = '123';
+        const DELETE_PASSWORD = 'algharabawy';
 
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -219,10 +411,10 @@
         ];
 
         let allEmployees = [];
+        let terminatedEmployees = [];
         let currentRole = localStorage.getItem('gharbawee_role');
 
         function checkAuth() {
-            // التحقق من الدخول التلقائي عبر البوابة المركزية
             if (sessionStorage.getItem('auth_session') === 'active') {
                 currentRole = 'admin';
                 localStorage.setItem('gharbawee_role', 'admin');
@@ -280,7 +472,7 @@
                 adminActionButtons.style.display = 'flex';
                 tableHeaderActions.style.display = 'table-cell';
             } else {
-                userBadge.textContent = 'حساب: 👁️ مستخدم عادي';
+                userBadge.textContent = 'حساب: 👁️️ مستخدم عادي';
                 adminActionButtons.style.display = 'none';
                 tableHeaderActions.style.display = 'none';
             }
@@ -309,7 +501,7 @@
             const icon = document.getElementById('themeIcon');
             const text = document.getElementById('themeText');
             if (isDark) {
-                icon.textContent = '☀️';
+                icon.textContent = '☀';
                 text.textContent = 'الوضع الفاتح';
             } else {
                 icon.textContent = '🌙';
@@ -347,24 +539,46 @@
                 let { data, error } = await _supabase.from('employees').select('*').order('id', { ascending: false });
                 if (error) throw error;
 
-                allEmployees = data || [];
+                const rawData = data || [];
+                allEmployees = rawData.filter(emp => emp.status !== 'terminated');
+                terminatedEmployees = rawData.filter(emp => emp.status === 'terminated');
+
+                document.getElementById('terminatedCountBadge').textContent = terminatedEmployees.length;
+
                 statusBadge.textContent = 'متصل بنجاح بالسحاب ✅';
                 statusBadge.className = 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold';
                 
                 setupBranchDropdowns();
+                updateLastAddedEmployee();
                 renderTable(allEmployees);
             } catch (err) {
                 console.error('خطأ في الاتصال:', err);
                 statusBadge.textContent = 'خطأ في الاتصال بقاعدة البيانات ❌';
                 statusBadge.className = 'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-700 px-4 py-1.5 rounded-full text-xs font-semibold';
-                document.getElementById('employeesTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-10 text-rose-500 dark:text-rose-400">تعذر تحميل البيانات.</td></tr>`;
+                document.getElementById('employeesTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-10 text-rose-500 dark:text-rose-400">تعذر تحميل البيانات. تأكد من تشغيل الصفحة عبر سيرفر محلي (Live Server).</td></tr>`;
+            }
+        }
+
+        function updateLastAddedEmployee() {
+            const nameEl = document.getElementById('lastEmpName');
+            const branchEl = document.getElementById('lastEmpBranch');
+            const badgeEl = document.getElementById('lastEmpBadge');
+            if (allEmployees.length > 0) {
+                const lastEmp = allEmployees[0];
+                nameEl.textContent = lastEmp.name || '-';
+                branchEl.textContent = lastEmp.branch || '-';
+                badgeEl.textContent = lastEmp.badge || '-';
+            } else {
+                nameEl.textContent = 'لا توجد بيانات';
+                branchEl.textContent = '-';
+                badgeEl.textContent = '-';
             }
         }
 
         function renderTable(employees) {
             const tbody = document.getElementById('employeesTableBody');
             const countLabel = document.getElementById('employeeCount');
-            countLabel.textContent = `إجمالي الموظفين: ${employees.length}`;
+            countLabel.textContent = `إجمالي الموظفين النشطين: ${employees.length}`;
 
             if (employees.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${currentRole === 'admin' ? 7 : 6}" class="text-center py-10 text-slate-400">لا توجد موظفين مضافين حالياً</td></tr>`;
@@ -373,21 +587,227 @@
 
             tbody.innerHTML = employees.map(emp => `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
-                    <td class="py-3 px-4 font-mono text-amber-600 dark:text-amber-300">${emp.badge || '-'}</td>
-                    <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${emp.code || '-'}</td>
-                    <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100">${emp.name || '-'}</td>
-                    <td class="py-3 px-4">
+                    <td class="py-3 px-4 font-mono text-amber-600 dark:text-amber-300 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">${emp.badge || '-'}</td>
+                    <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">${emp.code || '-'}</td>
+                    <td class="py-3 px-4 cursor-pointer hover:bg-amber-500/15 transition select-none min-w-[220px]" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">
+                        <div class="w-full h-full flex items-center justify-between">
+                            <span class="font-bold text-amber-600 dark:text-amber-400">${emp.name || '-'}</span>
+                            <span class="text-xs opacity-70">🔍</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">
                         <span class="bg-slate-100 dark:bg-slate-700 text-amber-700 dark:text-amber-200 px-2.5 py-1 rounded-lg text-xs">${emp.branch || '-'}</span>
                     </td>
-                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${emp.role || '-'}</td>
-                    <td class="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-400" dir="ltr">${emp.phone || '-'}</td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">${emp.role || '-'}</td>
+                    <td class="py-3 px-4 font-mono text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي" dir="ltr">${emp.phone || '-'}</td>
                     ${currentRole === 'admin' ? `
-                    <td class="py-3 px-4 text-center space-x-2 space-x-reverse">
-                        <button onclick="editEmployee('${emp.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs transition">✏️ تعديل</button>
-                        <button onclick="deleteEmployee('${emp.id}', '${emp.name}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs transition">🗑️ حذف</button>
+                    <td class="py-3 px-4 text-center space-x-1.5 space-x-reverse">
+                        <button onclick="openTransferModal('${emp.id}', '${emp.name}', '${emp.branch}')" class="bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg text-xs transition" title="نقل لفرع آخر">🔄 نقل</button>
+                        <button onclick="editEmployee('${emp.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs transition" title="تعديل">✏ تعديل</button>
+                        <button onclick="terminateEmployee('${emp.id}', '${emp.name}')" class="bg-amber-700 hover:bg-amber-800 text-white px-2.5 py-1 rounded-lg text-xs transition" title="إنهاء الخدمة">🚫 إنهاء الخدمة</button>
                     </td>` : ''}
                 </tr>
             `).join('');
+        }
+
+        // Open Monthly Movements Modal
+        async function openMonthlyMovementsModal() {
+            const modalBody = document.getElementById('monthlyMovementsTableBody');
+            modalBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">جاري تحميل حركات الشهر...</td></tr>`;
+            document.getElementById('monthlyMovementsModal').classList.remove('hidden');
+
+            try {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const startOfMonth = new Date(year, month, 1).toISOString();
+
+                let { data, error } = await _supabase
+                    .from('employee_transfers')
+                    .select('*')
+                    .gte('transfer_date', startOfMonth)
+                    .order('transfer_date', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    modalBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">لا توجد حركات تنقل مسجلة خلال هذا الشهر.</td></tr>`;
+                    return;
+                }
+
+                let { data: empData } = await _supabase.from('employees').select('id, name, badge');
+                const empMap = {};
+                if (empData) {
+                    empData.forEach(e => { empMap[e.id] = e; });
+                }
+
+                modalBody.innerHTML = data.map(t => {
+                    const emp = empMap[t.employee_id] || { name: 'موظف غير معروف', badge: '-' };
+                    const dateFormatted = new Date(t.transfer_date).toLocaleString('ar-EG', {
+                        year: 'numeric', month: 'numeric', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    return `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-3 px-4 font-bold text-amber-600 dark:text-amber-400">${emp.name}</td>
+                            <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${emp.badge || '-'}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${t.from_branch || '-'}</td>
+                            <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">${t.to_branch || '-'}</td>
+                            <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${dateFormatted}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('خطأ في جلب حركات الشهر:', err);
+                modalBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-rose-500">تعذر تحميل سجل الحركات.</td></tr>`;
+            }
+        }
+
+        function closeMonthlyMovementsModal() {
+            document.getElementById('monthlyMovementsModal').classList.add('hidden');
+        }
+
+        // Open Terminated Employees Modal
+        function openTerminatedModal() {
+            const tbody = document.getElementById('terminatedTableBody');
+            document.getElementById('terminatedModal').classList.remove('hidden');
+
+            if (terminatedEmployees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">لا توجد سجلات لإنهاء الخدمة حالياً.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = terminatedEmployees.map(emp => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                    <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${emp.badge || '-'}</td>
+                    <td class="py-3 px-4 font-bold text-rose-600 dark:text-rose-400">${emp.name || '-'}</td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${emp.branch || '-'}</td>
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${emp.role || '-'}</td>
+                    <td class="py-3 px-4 text-center space-x-1.5 space-x-reverse">
+                        <button onclick="restoreEmployee('${emp.id}', '${emp.name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs transition shadow" title="إعادة للخدمة مع الاحتفاظ بالبيانات">🔄 عودة</button>
+                        <button onclick="deleteTerminatedEmployee('${emp.id}', '${emp.name}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs transition shadow" title="حذف نهائي">🗑️ حذف نهائي</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function closeTerminatedModal() {
+            document.getElementById('terminatedModal').classList.add('hidden');
+        }
+
+        // Terminate Employee
+        async function terminateEmployee(id, name) {
+            if (currentRole !== 'admin') return;
+
+            if (!confirm(`هل أنت متأكد من إنهاء خدمة الموظف (${name})؟ سيتم نقله إلى قائمة المنتهية خدماتهم.`)) return;
+
+            try {
+                const { error } = await _supabase.from('employees').update({ status: 'terminated' }).eq('id', id);
+                if (error) throw error;
+                alert(`تم إنهاء خدمة الموظف (${name}) بنجاح.`);
+                fetchEmployees();
+            } catch (err) {
+                console.error('خطأ أثناء إنهاء الخدمة:', err);
+                alert('تعذر إنهاء خدمة الموظف: ' + err.message + '\n(تأكد من إضافة عمود status في جدول Supabase)');
+            }
+        }
+
+        // Restore Terminated Employee Back to Active
+        async function restoreEmployee(id, name) {
+            if (currentRole !== 'admin') return;
+
+            if (!confirm(`هل أنت متأكد من رغبتك في إعادة الموظف (${name}) للخدمة النشطة مع الحفاظ على بياناته؟`)) return;
+
+            try {
+                const { error } = await _supabase.from('employees').update({ status: null }).eq('id', id);
+                if (error) throw error;
+                alert(`تمت إعادة الموظف (${name}) بنجاح إلى قائمة الموظفين النشطين! 🎉`);
+                fetchEmployees();
+                openTerminatedModal(); // تحديث النافذة المفتوحة
+            } catch (err) {
+                console.error('خطأ أثناء استعادة الموظف:', err);
+                alert('تعذر استعادة الموظف: ' + err.message);
+            }
+        }
+
+        // Permanent Delete for Terminated Employees (Protected by password)
+        async function deleteTerminatedEmployee(id, name) {
+            if (currentRole !== 'admin') return;
+
+            const passInput = prompt(`⚠️ عملية حذف نهائي للموظف المنتهية خدمته (${name})\nيرجى إدخال كلمة المرور للمتابعة:`);
+            if (passInput === null) return;
+
+            if (passInput !== DELETE_PASSWORD) {
+                alert('❌ كلمة المرور غير صحيحة! تم إيقاف عملية الحذف.');
+                return;
+            }
+
+            if (!confirm(`هل أنت متأكد تماماً من حذف الموظف (${name}) نهائياً من قاعدة البيانات؟`)) return;
+
+            try {
+                const { error } = await _supabase.from('employees').delete().eq('id', id);
+                if (error) throw error;
+                alert('تم حذف الموظف نهائياً بنجاح.');
+                fetchEmployees();
+                openTerminatedModal();
+            } catch (err) {
+                console.error('خطأ أثناء الحذف النهائي:', err);
+                alert('تعذر الحذف: ' + err.message);
+            }
+        }
+
+        // Open Profile & Transfer History Modal
+        async function openProfileModal(id) {
+            const emp = allEmployees.find(e => e.id == id);
+            if (!emp) return;
+
+            document.getElementById('profName').textContent = emp.name || '-';
+            document.getElementById('profBadge').textContent = emp.badge || '-';
+            document.getElementById('profCode').textContent = emp.code || '-';
+            document.getElementById('profBranch').textContent = emp.branch || '-';
+            document.getElementById('profRole').textContent = emp.role || '-';
+            document.getElementById('profPhone').textContent = emp.phone || '-';
+
+            const historyBody = document.getElementById('transferHistoryTableBody');
+            historyBody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-400">جاري تحميل سجل التنقلات...</td></tr>`;
+            document.getElementById('profileModal').classList.remove('hidden');
+
+            try {
+                let { data, error } = await _supabase
+                    .from('employee_transfers')
+                    .select('*')
+                    .eq('employee_id', id)
+                    .order('transfer_date', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    historyBody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-400">لا توجد تنقلات مسجلة لهذا الموظف سابقاً.</td></tr>`;
+                    return;
+                }
+
+                historyBody.innerHTML = data.map(t => {
+                    const dateFormatted = new Date(t.transfer_date).toLocaleString('ar-EG', {
+                        year: 'numeric', month: 'numeric', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    return `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${t.from_branch || '-'}</td>
+                            <td class="py-2.5 px-3 font-bold text-amber-600 dark:text-amber-400">${t.to_branch || '-'}</td>
+                            <td class="py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400">${dateFormatted}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('خطأ في جلب سجل التنقلات:', err);
+                historyBody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-rose-500">تعذر تحميل سجل التنقلات.</td></tr>`;
+            }
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
         }
 
         function filterData() {
@@ -407,6 +827,38 @@
             });
 
             renderTable(filtered);
+        }
+
+        // Export Excel Function
+        function exportExcel() {
+            const selectedBranch = document.getElementById('branchFilter').value;
+            const dataToExport = selectedBranch === 'all' 
+                ? allEmployees 
+                : allEmployees.filter(emp => emp.branch === selectedBranch);
+
+            if (dataToExport.length === 0) {
+                alert('لا توجد بيانات متاحة للتصدير في العرض الحالي.');
+                return;
+            }
+
+            const excelData = dataToExport.map(emp => ({
+                'رقم البصمة': emp.badge || '',
+                'الرقم الوظيفي': emp.code || '',
+                'الاسم': emp.name || '',
+                'الفرع': emp.branch || '',
+                'الوظيفة': emp.role || '',
+                'رقم التليفون': emp.phone || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "الموظفون");
+
+            const fileName = selectedBranch === 'all' 
+                ? 'جميع_موظفي_بن_الغرباوي.xlsx' 
+                : `موظفو_فرع_${selectedBranch}.xlsx`;
+
+            XLSX.writeFile(workbook, fileName);
         }
 
         function openModal(emp = null) {
@@ -441,17 +893,63 @@
             if (emp) openModal(emp);
         }
 
-        async function deleteEmployee(id, name) {
+        // Transfer Modal Functions
+        function openTransferModal(id, name, branch) {
             if (currentRole !== 'admin') return;
-            if (!confirm(`هل أنت متأكد من حذف الموظف (${name}) نهائياً من السحابة؟`)) return;
+            document.getElementById('transferEmpId').value = id;
+            document.getElementById('transferOldBranch').value = branch;
+            document.getElementById('transferEmpNameDisplay').value = name;
+            document.getElementById('transferCurrentBranchDisplay').value = branch;
+
+            const targetSelect = document.getElementById('targetBranchSelect');
+            targetSelect.innerHTML = '<option value="">اختر الفرع الجديد...</option>';
+            companyBranches.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                targetSelect.appendChild(opt);
+            });
+
+            document.getElementById('transferModal').classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+            document.getElementById('transferEmpId').value = '';
+            document.getElementById('transferOldBranch').value = '';
+        }
+
+        async function confirmTransfer() {
+            const id = document.getElementById('transferEmpId').value;
+            const oldBranch = document.getElementById('transferOldBranch').value;
+            const newBranch = document.getElementById('targetBranchSelect').value;
+
+            if (!newBranch) {
+                alert('يرجى اختيار الفرع الجديد أولاً!');
+                return;
+            }
+
+            if (oldBranch === newBranch) {
+                alert('الموظف بالفعل في هذا الفرع!');
+                return;
+            }
 
             try {
-                const { error } = await _supabase.from('employees').delete().eq('id', id);
+                const { error } = await _supabase.from('employees').update({ branch: newBranch }).eq('id', id);
                 if (error) throw error;
+
+                await _supabase.from('employee_transfers').insert([{
+                    employee_id: id,
+                    from_branch: oldBranch,
+                    to_branch: newBranch
+                }]);
+
+                alert('تم نقل الموظف بنجاح وسجل تاريخ النقل في السحابة! 🚀');
+                closeTransferModal();
                 fetchEmployees();
             } catch (err) {
-                console.error('خطأ أثناء الحذف:', err);
-                alert('تعذر حذف الموظف: ' + err.message);
+                console.error('خطأ أثناء نقل الموظف:', err);
+                alert('تعذر نقل الموظف: ' + err.message);
             }
         }
 
