@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بن الغرباوي - لوحة الإدارة الرئيسية</title>
+    <!-- مكتبة تيلويند سي إس إس -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- مكتبة Supabase JS للربط بقاعدة البيانات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <!-- شاشة تسجيل الدخول (تظهر فقط عند فتح الصفحة مباشرة بدون البوابة المركزية) -->
+    <div id="loginScreen" class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-gray-200 space-y-6 hidden">
+        <div class="text-center space-y-2">
+            <div class="bg-amber-900 w-16 h-16 mx-auto rounded-2xl flex items-center justify-center shadow-md">
+                <img src="https://i.postimg.cc/VvnhkQhY/logo-01.png" alt="بن الغرباوي" class="h-10 w-auto object-contain">
+            </div>
+            <h1 class="text-xl font-bold text-amber-900">بن الغرباوي - بوابة الإدارة</h1>
+            <p class="text-xs text-gray-500">اختر نوع الحساب وأدخل كلمة المرور للمتابعة</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">نوع الدخول</label>
+                <select id="loginType" onchange="toggleLoginFields()" class="w-full p-3 border rounded-xl text-sm bg-white focus:outline-none focus:border-amber-600">
+                    <option value="branch">مدير فرع</option>
+                    <option value="admin">مدير عام (الإدارة الرئيسية)</option>
+                </select>
+            </div>
+
+            <div id="branchSelectWrapper">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">اختر الفرع</label>
+                <select id="branchName" class="w-full p-3 border rounded-xl text-sm bg-white focus:outline-none focus:border-amber-600">
+                    <option value="أم المصريين">أم المصريين</option>
+                    <option value="فيصل">فيصل</option>
+                    <option value="عباس العقاد">عباس العقاد</option>
+                    <option value="مصر الجديدة">مصر الجديدة</option>
+                    <option value="المقطم">المقطم</option>
+                    <option value="حلوان">حلوان</option>
+                    <option value="حدائق حلوان">حدائق حلوان</option>
+                    <option value="الجزائر">الجزائر</option>
+                    <option value="العرب">العرب</option>
+                    <option value="ثكنات المعادي">ثكنات المعادي</option>
+                    <option value="حدائق المعادي">حدائق المعادي</option>
+                    <option value="زهراء المعادي">زهراء المعادي</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">كلمة المرور</label>
+                <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور..." class="w-full p-3 border rounded-xl text-sm focus:outline-none focus:border-amber-600">
+            </div>
+
+            <button type="submit" class="w-full bg-amber-800 hover:bg-amber-900 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg">
+                تسجيل الدخول
+            </button>
+            <p id="loginError" class="text-center text-xs text-red-600 hidden font-bold">كلمة المرور غير صحيحة!</p>
+        </form>
+    </div>
+
+    <!-- لوحة التحكم الرئيسية -->
+    <div id="dashboardScreen" class="w-full max-w-7xl space-y-6">
+        <!-- شريط العرض العلوي -->
+        <header class="bg-amber-900 text-white shadow-md rounded-2xl px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center">
+                    <img src="https://i.postimg.cc/VvnhkQhY/logo-01.png" alt="بن الغرباوي" class="h-8 w-auto object-contain">
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold" id="dashboardTitle">لوحة التحكم</h1>
+                    <span class="text-xs text-amber-200" id="userRoleBadge">مدير الفرع</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="refreshData()" class="bg-amber-700 hover:bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                    🔄 تحديث
+                </button>
+                <button onclick="logout()" class="bg-red-700 hover:bg-red-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                    🚪 تسجيل الخروج
+                </button>
+            </div>
+        </header>
+
+        <!-- المحتوى الرئيسي للوحة -->
+        <main class="space-y-6">
+            <!-- إحصائيات سريعة -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">إجمالي الطلبات</p>
+                        <h3 class="text-xl font-bold text-amber-900" id="statTotalOrders">0</h3>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl text-amber-800 font-bold">📦</div>
+                </div>
+                <div id="customerStatCard" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">إجمالي العملاء (اليوزرات)</p>
+                        <h3 class="text-xl font-bold text-blue-800" id="statTotalCustomers">0</h3>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-xl text-blue-800 font-bold">👥</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">طلبات جديدة</p>
+                        <h3 class="text-xl font-bold text-emerald-800" id="statNewOrders">0</h3>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-xl text-emerald-800 font-bold">🆕</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">متوسط التقييمات</p>
+                        <h3 class="text-xl font-bold text-amber-600" id="statRating">-</h3>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl text-amber-600 font-bold">⭐</div>
+                </div>
+            </div>
+
+            <!-- أزرار التنقل (تظهر للإدارة العامة فقط) -->
+            <div id="adminTabsNav" class="flex gap-2 border-b pb-3 hidden">
+                <button onclick="switchTab('orders')" id="tabOrdersBtn" class="bg-amber-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition">
+                    📦 إدارة ومتابعة الأوردرات
+                </button>
+                <button onclick="switchTab('customers')" id="tabCustomersBtn" class="bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition">
+                    👥 قاعدة بيانات العملاء (اليوزرات)
+                </button>
+            </div>
+
+            <!-- قسم الأوردرات -->
+            <div id="ordersSection" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-base">📋 قائمة الأوردرات الواردة</h3>
+                    <div>
+                        <select id="filterStatus" onchange="filterOrders()" class="bg-white border text-xs px-3 py-1.5 rounded-lg focus:outline-none">
+                            <option value="all">كل الحالات</option>
+                            <option value="جديد">جديد</option>
+                            <option value="تجهيز">قيد التجهيز</option>
+                            <option value="توصيل">جاري التوصيل</option>
+                            <option value="تم التسليم">تم التسليم</option>
+                            <option value="ملغي">ملغي</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-amber-900 text-white">
+                            <tr>
+                                <th class="p-3">رقم الأوردر</th>
+                                <th class="p-3">اسم العميل</th>
+                                <th class="p-3">الهواتف</th>
+                                <th class="p-3">الطلبات</th>
+                                <th class="p-3">العنوان والفرع</th>
+                                <th class="p-3">الحالة</th>
+                                <th class="p-3">التقييم والآراء</th>
+                                <th class="p-3 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody" class="divide-y divide-gray-200 text-gray-700">
+                            <tr><td colspan="8" class="text-center p-6 text-gray-400">جاري تحميل الطلبات...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- قسم العملاء (اليوزرات) - للإدارة العامة فقط -->
+            <div id="customersSection" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hidden">
+                <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-base">👥 قاعدة بيانات العملاء المسجلين (اليوزرات)</h3>
+                    <span class="text-xs text-gray-500">يتم حفظ وتحديث هذه البيانات تلقائياً عند طلب العميل</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-blue-900 text-white">
+                            <tr>
+                                <th class="p-3">اسم العميل</th>
+                                <th class="p-3">رقم الهاتف الأساسي</th>
+                                <th class="p-3">رقم الهاتف الإضافي</th>
+                                <th class="p-3">الفرع المفضل</th>
+                                <th class="p-3">العنوان المسجل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody" class="divide-y divide-gray-200 text-gray-700">
+                            <tr><td colspan="5" class="text-center p-6 text-gray-400">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // إعدادات Supabase
+        const SUPABASE_URL = 'https://csroadhvynbSksqncrur.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        const ADMIN_PASSWORDS = ["algharabawy", "algharabawy3"];
+        
+        const branchPasswords = {
+            "أم المصريين": "om_elmasryeen",
+            "فيصل": "faisal",
+            "عباس العقاد": "abbas",
+            "مصر الجديدة": "masr",
+            "المقطم": "mokattam",
+            "حلوان": "helwan",
+            "حدائق حلوان": "hadayek_helwan",
+            "الجزائر": "algeria",
+            "العرب": "arab",
+            "ثكنات المعادي": "thakanat",
+            "حدائق المعادي": "hadayek_maadi",
+            "زهراء المعادي": "زهراء"
+        };
+
+        let currentUser = null; 
+        let allOrders = [];
+        let allCustomers = [];
+
+        // التحقق مما إذا كان الدخول قادماً من حساب المدير/البرتال المركزى
+        window.addEventListener('DOMContentLoaded', () => {
+            const role = sessionStorage.getItem('gharbawee_role');
+            
+            // إذا كان الدخول من حساب المدير العام أو مسؤول الفروع بالبوابة المركزية
+            if (role === 'master' || role === 'branch_admin') {
+                currentUser = { role: 'admin', name: 'الإدارة الرئيسية' };
+                initDashboard();
+            } else {
+                // خلاف ذلك، تظهر شاشة تسجيل الدخول العادية
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('dashboardScreen').classList.add('hidden');
+            }
+        });
+
+        function toggleLoginFields() {
+            const loginType = document.getElementById('loginType').value;
+            const branchWrapper = document.getElementById('branchSelectWrapper');
+            if (loginType === 'admin') {
+                branchWrapper.classList.add('hidden');
+            } else {
+                branchWrapper.classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const loginType = document.getElementById('loginType').value;
+            const password = document.getElementById('passwordInput').value.trim();
+            const errorMsg = document.getElementById('loginError');
+
+            if (loginType === 'admin') {
+                if (ADMIN_PASSWORDS.includes(password)) {
+                    currentUser = { role: 'admin', name: 'الإدارة الرئيسية' };
+                    initDashboard();
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            } else {
+                const branch = document.getElementById('branchName').value;
+                if (branchPasswords[branch] && password === branchPasswords[branch]) {
+                    currentUser = { role: 'branch', name: branch };
+                    initDashboard();
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            sessionStorage.clear();
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        async function initDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+
+            if (currentUser.role === 'admin') {
+                document.getElementById('dashboardTitle').textContent = 'لوحة الإدارة الرئيسية (جميع الفروع)';
+                document.getElementById('userRoleBadge').textContent = 'مدير عام';
+                document.getElementById('adminTabsNav').classList.remove('hidden');
+                document.getElementById('customerStatCard').classList.remove('hidden');
+                await loadCustomers();
+            } else {
+                document.getElementById('dashboardTitle').textContent = `فرع: ${currentUser.name}`;
+                document.getElementById('userRoleBadge').textContent = 'مدير الفرع';
+                document.getElementById('adminTabsNav').classList.add('hidden');
+                document.getElementById('customersSection').classList.add('hidden');
+                document.getElementById('customerStatCard').classList.add('hidden');
+            }
+
+            await loadOrders();
+        }
+
+        function switchTab(tabName) {
+            const ordersSec = document.getElementById('ordersSection');
+            const customersSec = document.getElementById('customersSection');
+            const ordersBtn = document.getElementById('tabOrdersBtn');
+            const customersBtn = document.getElementById('tabCustomersBtn');
+
+            if (tabName === 'orders') {
+                ordersSec.classList.remove('hidden');
+                customersSec.classList.add('hidden');
+                ordersBtn.className = "bg-amber-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition";
+                customersBtn.className = "bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition";
+            } else {
+                ordersSec.classList.add('hidden');
+                customersSec.classList.remove('hidden');
+                customersBtn.className = "bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition";
+                ordersBtn.className = "bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition";
+            }
+        }
+
+        async function refreshData() {
+            await loadOrders();
+            if (currentUser.role === 'admin') {
+                await loadCustomers();
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                let query = supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+                
+                if (currentUser.role === 'branch') {
+                    query = query.eq('region', currentUser.name);
+                }
+
+                let { data, error } = await query;
+                if (!error) {
+                    allOrders = data || [];
+                    renderOrders(allOrders);
+                    updateStats();
+                }
+            } catch (err) {
+                console.error('خطأ في جلب الأوردرات:', err);
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                let { data, error } = await supabaseClient.from('customers').select('*');
+                if (!error) {
+                    allCustomers = data || [];
+                    renderCustomers(allCustomers);
+                    updateStats();
+                }
+            } catch (err) {
+                console.error('خطأ في جلب العملاء:', err);
+            }
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-6 text-gray-400">لا توجد أوردرات مسجلة لهذا الفرع حالياً.</td></tr>`;
+                return;
+            }
+
+            orders.forEach(order => {
+                let ratingDisplay = '<span class="text-gray-400">لا يوجد</span>';
+                if (order.rating) {
+                    ratingDisplay = `
+                        <div class="space-y-1">
+                            <span class="text-amber-600 font-bold">${'⭐'.repeat(order.rating)} (${order.rating}/5)</span>
+                            ${order.feedback ? `<p class="text-gray-500 text-[11px]">"${order.feedback}"</p>` : ''}
+                        </div>
+                    `;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-amber-50/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-amber-900">${order.id}</td>
+                    <td class="p-3 font-bold">${order.name}</td>
+                    <td class="p-3">
+                        <div>📞 ${order.phone1}</div>
+                        ${order.phone2 ? `<div class="text-gray-400 text-[11px]">📞 ${order.phone2}</div>` : ''}
+                    </td>
+                    <td class="p-3 font-semibold text-gray-900 max-w-xs">${order.details}</td>
+                    <td class="p-3">
+                        <div><b>${order.region}</b></div>
+                        <div class="text-gray-500 text-[11px] max-w-xs truncate">${order.address}</div>
+                    </td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded font-bold text-[11px] ${
+                            order.status && order.status.includes('جديد') ? 'bg-blue-100 text-blue-800' :
+                            order.status && order.status.includes('تجهيز') ? 'bg-amber-100 text-amber-800' :
+                            order.status && order.status.includes('توصيل') ? 'bg-purple-100 text-purple-800' :
+                            order.status && order.status.includes('ملغي') ? 'bg-red-100 text-red-800' :
+                            'bg-green-100 text-green-800'
+                        }">${order.status}</span>
+                    </td>
+                    <td class="p-3">${ratingDisplay}</td>
+                    <td class="p-3 text-center">
+                        <select onchange="updateOrderStatus('${order.id}', this.value)" class="w-full bg-white border text-xs p-1 rounded font-semibold">
+                            <option value="" disabled selected>تغيير الحالة...</option>
+                            <option value="جديد (في انتظار الاستلام)">جديد</option>
+                            <option value="جار تجهيز الطلب في المحل">قيد التجهيز</option>
+                            <option value="الطلب مع الدليفري في الطريق إليك">جاري التوصيل</option>
+                            <option value="تم التسليم بنجاح">تم التسليم</option>
+                            <option value="تم إلغاء الطلب">ملغي</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCustomers(customers) {
+            const tbody = document.getElementById('customersTableBody');
+            tbody.innerHTML = '';
+
+            if (customers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-400">لا توجد بيانات عملاء مسجلة.</td></tr>`;
+                return;
+            }
+
+            customers.forEach(cust => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-blue-900">${cust.name || 'بدون اسم'}</td>
+                    <td class="p-3 font-semibold">📞 ${cust.phone1}</td>
+                    <td class="p-3 text-gray-500">${cust.phone2 ? '📞 ' + cust.phone2 : 'لا يوجد'}</td>
+                    <td class="p-3"><b>${cust.region || 'غير محدد'}</b></td>
+                    <td class="p-3 text-gray-600 max-w-xs truncate">${cust.address || 'لا يوجد عنوان'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                let { error } = await supabaseClient.from('orders').update({ status: newStatus }).eq('id', orderId);
+                if (error) {
+                    alert('خطأ أثناء تحديث الحالة.');
+                    return;
+                }
+                loadOrders();
+            } catch (err) {
+                console.error('خطأ:', err);
+            }
+        }
+
+        function filterOrders() {
+            const filterVal = document.getElementById('filterStatus').value;
+            if (filterVal === 'all') {
+                renderOrders(allOrders);
+            } else {
+                const filtered = allOrders.filter(o => o.status && o.status.includes(filterVal));
+                renderOrders(filtered);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalOrders').textContent = allOrders.length;
+            if (currentUser.role === 'admin') {
+                document.getElementById('statTotalCustomers').textContent = allCustomers.length;
+            }
+            document.getElementById('statNewOrders').textContent = allOrders.filter(o => o.status && o.status.includes('جديد')).length;
+
+            const ratedOrders = allOrders.filter(o => o.rating);
+            if (ratedOrders.length > 0) {
+                let sum = ratedOrders.reduce((acc, curr) => acc + curr.rating, 0);
+                let avg = (sum / ratedOrders.length).toFixed(1);
+                document.getElementById('statRating').textContent = avg + ' / 5';
+            } else {
+                document.getElementById('statRating').textContent = '-';
+            }
+        }
+    </script>
+</body>
+</html>
