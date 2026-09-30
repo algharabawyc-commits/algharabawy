@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوابة النظام المركزي - بن الغرباوي</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
@@ -34,6 +34,7 @@
                     <option value="master">المدير العام (Master Admin)</option>
                     <option value="recruitment">مسؤول طلبات التوظيف</option>
                     <option value="hr">مسؤول إدارة الموظفين</option>
+                    <option value="branch_admin">مسؤول إدارة الفروع والأوردرات</option>
                 </select>
             </div>
 
@@ -52,17 +53,21 @@
         </div>
 
         <!-- Master Dashboard Options (Shows only when logged in as Master Admin) -->
-        <div id="masterDashboard" class="space-y-4 text-right hidden">
-            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-4 mb-4 text-center">
+        <div id="masterDashboard" class="space-y-3 text-right hidden">
+            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-4 mb-3 text-center">
                 <h3 class="text-sm font-bold text-amber-700 dark:text-amber-400">مرحباً بك يا مدير عام النظام</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">اختر القسم الذي تريد الانتقال إليه:</p>
             </div>
 
-            <a href="hr.html" onclick="setSession('admin')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center font-bold text-sm transition shadow">
+            <a href="branch_dashboard.html" onclick="setSession('branch_admin')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-center font-bold text-sm transition shadow">
+                ☕ لوحة إدارة الفروع والأوردرات
+            </a>
+
+            <a href="hr.html" onclick="setSession('admin')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-center font-bold text-sm transition shadow">
                 👥 نظام إدارة موظفي الفروع
             </a>
 
-            <a href="admin.html" onclick="setSession('recruitment')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center font-bold text-sm transition shadow">
+            <a href="admin.html" onclick="setSession('recruitment')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-center font-bold text-sm transition shadow">
                 📋 لوحة متابعة طلبات التوظيف
             </a>
 
@@ -105,6 +110,15 @@
                     sessionStorage.setItem('auth_session', 'active');
                     sessionStorage.setItem('gharbawee_role', 'admin');
                     window.location.href = 'hr.html';
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            }
+            else if (role === 'branch_admin') {
+                if (password === 'algharabawy3') {
+                    sessionStorage.setItem('auth_session', 'active');
+                    sessionStorage.setItem('gharbawee_role', 'branch_admin');
+                    window.location.href = 'branch_dashboard.html';
                 } else {
                     errorMsg.classList.remove('hidden');
                 }
