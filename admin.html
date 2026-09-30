@@ -25,7 +25,7 @@
 </head>
 <body class="min-h-screen py-6 px-4">
 
-    <!-- حاوية الإشعارات اللحظية (Toast) -->
+    <!-- حاوية الإشعارات اللحظية داخل الصفحة -->
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4 pointer-events-none"></div>
 
     <!-- شاشة تسجيل الدخول -->
@@ -56,7 +56,10 @@
                     <p class="text-xs text-gray-400 mt-1">بن الغرباوي - إدارة المتقدمين والفرز والمقابلات الشخصية</p>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 items-center">
+                <button onclick="requestNotificationPermission()" id="notifPermissionBtn" class="bg-gray-800 hover:bg-gray-700 text-amber-400 px-3 py-2 rounded-xl text-xs font-bold border border-amber-600/30 shadow transition">
+                    🔔 تفعيل إشعارات الويندوز
+                </button>
                 <button onclick="loadApplications()" class="brand-btn px-4 py-2 rounded-xl text-xs font-bold shadow">
                     🔄 تحديث البيانات
                 </button>
@@ -194,13 +197,24 @@
         let allApplications = [];
 
         window.addEventListener('DOMContentLoaded', () => {
+            registerServiceWorker();
             if (sessionStorage.getItem('auth_session') === 'active') {
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
                 loadApplications();
                 initRealtimeListener();
+                checkNotificationPermissionStatus();
             }
         });
+
+        // تسجيل ملف الخدمة في الخلفية
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            }
+        }
 
         function handleLogin(e) {
             e.preventDefault();
@@ -213,6 +227,7 @@
                 document.getElementById('dashboardContent').classList.remove('hidden');
                 loadApplications();
                 initRealtimeListener();
+                requestNotificationPermission();
             } else {
                 errorMsg.classList.remove('hidden');
                 document.getElementById('adminPassword').value = '';
@@ -224,7 +239,55 @@
             window.location.href = 'index.html';
         }
 
-        // دالة التنبيه الصوتي
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("متصفحك لا يدعم إشعارات سطح المكتب.");
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                checkNotificationPermissionStatus();
+            });
+        }
+
+        function checkNotificationPermissionStatus() {
+            const btn = document.getElementById('notifPermissionBtn');
+            if (!("Notification" in window)) return;
+            
+            if (Notification.permission === "granted") {
+                btn.innerText = "✅ إشعارات الويندوز مفعلة";
+                btn.className = "bg-emerald-900/50 text-emerald-300 px-3 py-2 rounded-xl text-xs font-bold border border-emerald-600/30 shadow transition cursor-default";
+            } else if (Notification.permission === "denied") {
+                btn.innerText = "❌ تم حظر الإشعارات";
+                btn.className = "bg-red-900/50 text-red-300 px-3 py-2 rounded-xl text-xs font-bold border border-red-700/30 shadow transition cursor-default";
+            } else {
+                btn.innerText = "🔔 تفعيل إشعارات الويندوز";
+                btn.className = "bg-gray-800 hover:bg-gray-700 text-amber-400 px-3 py-2 rounded-xl text-xs font-bold border border-amber-600/30 shadow transition";
+            }
+        }
+
+        // إطلاق إشعار الويندوز الاحترافي عبر Service Worker (يعمل حتى لو التبويب غير نشط أو في الخلفية)
+        async function showDesktopNotification(title, bodyText) {
+            if (!("Notification" in window)) return;
+
+            if (Notification.permission === "granted") {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    if (registration) {
+                        registration.showNotification(title, {
+                            body: bodyText,
+                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                            badge: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                            vibrate: [200, 100, 200]
+                        });
+                    } else {
+                        new Notification(title, { body: bodyText, icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png" });
+                    }
+                } catch (e) {
+                    console.log("Desktop notification error:", e);
+                }
+            }
+        }
+
         function playNotificationSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -284,7 +347,12 @@
                         console.log('New application detected:', payload);
                         playNotificationSound();
                         const newApp = payload.new;
+                        const notifTitle = "🔔 طلب توظيف جديد - بن الغرباوي";
+                        const notifBody = `متقدم جديد: ${newApp.name_in_full}\nالوظيفة: ${newApp.job_applied_for || 'غير محدد'}\nالهاتف: ${newApp.telephone_no}`;
+                        
+                        showDesktopNotification(notifTitle, notifBody);
                         showToast(`🔔 متقدم جديد: ${newApp.name_in_full} (${newApp.job_applied_for || 'وظيفة جديدة'})`);
+                        
                         loadApplications();
                     }
                 )
@@ -475,7 +543,6 @@
             }
         }
 
-        // تم إزالة رقم جواز السفر من نموذج الطباعة هنا
         function printApplicationRecord(app) {
             const printWindow = window.open('', '_blank');
             const photoSrc = app.personal_photo ? app.personal_photo : '';
