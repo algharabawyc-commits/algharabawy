@@ -251,10 +251,10 @@
 
     <!-- Employee Profile & Transfer History Modal -->
     <div id="profileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-3xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
                 <h3 class="text-lg font-bold text-amber-600 dark:text-amber-500 flex items-center gap-2">
-                    <span>👤 الملف الشخصي وسجل التنقلات</span>
+                    <span>👤 الملف الشخصي والمستندات الخلفية وسجل التنقلات</span>
                 </h3>
                 <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
             </div>
@@ -284,6 +284,59 @@
                 <div>
                     <span class="block text-[11px] text-slate-400">رقم الهاتف</span>
                     <span id="profPhone" class="font-mono text-emerald-600 dark:text-emerald-400 text-sm" dir="ltr">-</span>
+                </div>
+            </div>
+
+            <!-- Background & Documents Details Section -->
+            <div class="mb-6 bg-amber-50/50 dark:bg-slate-900/60 p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50">
+                <h4 class="text-sm font-bold text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-2">
+                    <span>📁 المستندات والبيانات الإدارية (الخلفية)</span>
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <span class="block text-[10px] text-slate-400">يوم الإجازة</span>
+                        <span id="profRestDay" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">رقم البطاقة</span>
+                        <span id="profNationalId" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">شهادة الميلاد (أصل)</span>
+                        <span id="profBirthCert" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">شهادة المؤهل (أصل)</span>
+                        <span id="profQualCert" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">الخدمة العسكرية</span>
+                        <span id="profMilitary" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">صورة البطاقة</span>
+                        <span id="profIdCardImg" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">فيش وتشبيه</span>
+                        <span id="profPoliceRecord" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">3 صور شخصية</span>
+                        <span id="profPhotos" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">البطاقة الصحية</span>
+                        <span id="profHealthCard" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] text-slate-400">برنت تأميني</span>
+                        <span id="profInsurance" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
+                    <div class="col-span-2 sm:col-span-3">
+                        <span class="block text-[10px] text-slate-400">ملحوظة</span>
+                        <span id="profNotes" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                    </div>
                 </div>
             </div>
 
@@ -318,7 +371,7 @@
 
     <!-- Add/Edit Employee Modal -->
     <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl transition-colors duration-300">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl w-full max-w-2xl p-6 shadow-2xl transition-colors duration-300 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
                 <h3 id="modalTitle" class="text-lg font-bold text-amber-600 dark:text-amber-500">إضافة موظف جديد للسحابة</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white text-xl">✕</button>
@@ -355,6 +408,88 @@
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">رقم الهاتف</label>
                     <input type="text" id="empPhone" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500" placeholder="مثال: 01012345678">
                 </div>
+
+                <!-- Background / Document Details Section -->
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+                    <h4 class="text-xs font-bold text-amber-600 dark:text-amber-500 mb-3">📁 المستندات والبيانات الإدارية (تخزين في الخلفية / صفحة التفاصيل)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">يوم الإجازة</label>
+                            <input type="text" id="empRestDay" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500" placeholder="مثال: الجمعة">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">رقم البطاقة</label>
+                            <input type="text" id="empNationalId" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500" placeholder="14 رقم">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">شهادة الميلاد (أصل)</label>
+                            <select id="empBirthCert" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفر أصل">متوفر أصل</option>
+                                <option value="غير متوفر">غير متوفر</option>
+                                <option value="تحت الاستخراج">تحت الاستخراج</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">شهادة المؤهل (أصل)</label>
+                            <select id="empQualCert" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفر أصل">متوفر أصل</option>
+                                <option value="غير متوفر">غير متوفر</option>
+                                <option value="تحت الاستخراج">تحت الاستخراج</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">الخدمة العسكرية</label>
+                            <input type="text" id="empMilitary" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500" placeholder="مثال: تأجيل / إعفاء / أدى الخدمة">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">صورة البطاقة</label>
+                            <select id="empIdCardImg" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفرة">متوفرة</option>
+                                <option value="غير متوفرة">غير متوفرة</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">فيش وتشبيه</label>
+                            <select id="empPoliceRecord" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفر">متوفر</option>
+                                <option value="غير متوفر">غير متوفر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">3 صور شخصية</label>
+                            <select id="empPhotos" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفر">متوفر</option>
+                                <option value="غير متوفر">غير متوفر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">البطاقة الصحية</label>
+                            <select id="empHealthCard" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفرة">متوفرة</option>
+                                <option value="غير متوفرة">غير متوفرة</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">برنت تأميني</label>
+                            <select id="empInsurance" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                <option value="">اختر الحالة...</option>
+                                <option value="متوفر">متوفر</option>
+                                <option value="غير متوفر">غير متوفر</option>
+                            </select>
+                        </div>
+                        <div class="col-span-1 sm:col-span-2">
+                            <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ملحوظة</label>
+                            <textarea id="empNotes" rows="2" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500" placeholder="أي ملاحظات إضافية عن الموظف..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
                     <button type="button" onclick="closeModal()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm transition">إلغاء</button>
                     <button type="submit" id="saveBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-2 rounded-xl text-sm transition shadow">حفظ الموظف</button>
@@ -472,7 +607,7 @@
                 adminActionButtons.style.display = 'flex';
                 tableHeaderActions.style.display = 'table-cell';
             } else {
-                userBadge.textContent = 'حساب: 👁️️ مستخدم عادي';
+                userBadge.textContent = 'حساب: 👁 مستخدم عادي';
                 adminActionButtons.style.display = 'none';
                 tableHeaderActions.style.display = 'none';
             }
@@ -592,7 +727,7 @@
                     <td class="py-3 px-4 cursor-pointer hover:bg-amber-500/15 transition select-none min-w-[220px]" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">
                         <div class="w-full h-full flex items-center justify-between">
                             <span class="font-bold text-amber-600 dark:text-amber-400">${emp.name || '-'}</span>
-                            <span class="text-xs opacity-70">🔍</span>
+                            <span class="text-xs opacity-70">🔍 تفاصيل المستندات</span>
                         </div>
                     </td>
                     <td class="py-3 px-4 cursor-pointer hover:bg-amber-500/15 transition select-none" onclick="openProfileModal('${emp.id}')" title="اضغط لعرض الملف الشخصي">
@@ -709,7 +844,7 @@
                 fetchEmployees();
             } catch (err) {
                 console.error('خطأ أثناء إنهاء الخدمة:', err);
-                alert('تعذر إنهاء خدمة الموظف: ' + err.message + '\n(تأكد من إضافة عمود status في جدول Supabase)');
+                alert('تعذر إنهاء خدمة الموظف: ' + err.message);
             }
         }
 
@@ -724,7 +859,7 @@
                 if (error) throw error;
                 alert(`تمت إعادة الموظف (${name}) بنجاح إلى قائمة الموظفين النشطين! 🎉`);
                 fetchEmployees();
-                openTerminatedModal(); // تحديث النافذة المفتوحة
+                openTerminatedModal();
             } catch (err) {
                 console.error('خطأ أثناء استعادة الموظف:', err);
                 alert('تعذر استعادة الموظف: ' + err.message);
@@ -735,7 +870,8 @@
         async function deleteTerminatedEmployee(id, name) {
             if (currentRole !== 'admin') return;
 
-            const passInput = prompt(`⚠️ عملية حذف نهائي للموظف المنتهية خدمته (${name})\nيرجى إدخال كلمة المرور للمتابعة:`);
+            const passInput = prompt(`⚠️ عملية حذف نهائي للموظف المنتهية خدمته (${name})
+يرجى إدخال كلمة المرور للمتابعة:`);
             if (passInput === null) return;
 
             if (passInput !== DELETE_PASSWORD) {
@@ -757,17 +893,31 @@
             }
         }
 
-        // Open Profile & Transfer History Modal
+        // Open Profile & Document Details Modal
         async function openProfileModal(id) {
             const emp = allEmployees.find(e => e.id == id);
             if (!emp) return;
 
+            // Basic Info
             document.getElementById('profName').textContent = emp.name || '-';
             document.getElementById('profBadge').textContent = emp.badge || '-';
             document.getElementById('profCode').textContent = emp.code || '-';
             document.getElementById('profBranch').textContent = emp.branch || '-';
             document.getElementById('profRole').textContent = emp.role || '-';
             document.getElementById('profPhone').textContent = emp.phone || '-';
+
+            // Background / Document Details
+            document.getElementById('profRestDay').textContent = emp.rest_day || 'غير محدد';
+            document.getElementById('profNationalId').textContent = emp.national_id || 'غير متوفر';
+            document.getElementById('profBirthCert').textContent = emp.birth_cert || 'غير متوفر';
+            document.getElementById('profQualCert').textContent = emp.qualification_cert || 'غير متوفر';
+            document.getElementById('profMilitary').textContent = emp.military_service || 'غير محدد';
+            document.getElementById('profIdCardImg').textContent = emp.id_card_img || 'غير متوفر';
+            document.getElementById('profPoliceRecord').textContent = emp.police_record || 'غير متوفر';
+            document.getElementById('profPhotos').textContent = emp.personal_photos || 'غير متوفر';
+            document.getElementById('profHealthCard').textContent = emp.health_card || 'غير متوفر';
+            document.getElementById('profInsurance').textContent = emp.insurance_print || 'غير متوفر';
+            document.getElementById('profNotes').textContent = emp.notes || 'لا توجد ملاحظات';
 
             const historyBody = document.getElementById('transferHistoryTableBody');
             historyBody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-400">جاري تحميل سجل التنقلات...</td></tr>`;
@@ -821,7 +971,8 @@
                     (emp.badge && String(emp.badge).toLowerCase().includes(searchTerm)) ||
                     (emp.code && String(emp.code).toLowerCase().includes(searchTerm)) ||
                     (emp.role && emp.role.toLowerCase().includes(searchTerm)) ||
-                    (emp.phone && String(emp.phone).includes(searchTerm));
+                    (emp.phone && String(emp.phone).includes(searchTerm)) ||
+                    (emp.national_id && String(emp.national_id).includes(searchTerm));
 
                 return matchBranch && matchSearch;
             });
@@ -829,7 +980,7 @@
             renderTable(filtered);
         }
 
-        // Export Excel Function
+        // Export Excel Function (Includes background/document fields too!)
         function exportExcel() {
             const selectedBranch = document.getElementById('branchFilter').value;
             const dataToExport = selectedBranch === 'all' 
@@ -847,16 +998,27 @@
                 'الاسم': emp.name || '',
                 'الفرع': emp.branch || '',
                 'الوظيفة': emp.role || '',
-                'رقم التليفون': emp.phone || ''
+                'رقم التليفون': emp.phone || '',
+                'يوم الإجازة': emp.rest_day || '',
+                'رقم البطاقة': emp.national_id || '',
+                'شهادة الميلاد (أصل)': emp.birth_cert || '',
+                'شهادة المؤهل (أصل)': emp.qualification_cert || '',
+                'الخدمة العسكرية': emp.military_service || '',
+                'صورة البطاقة': emp.id_card_img || '',
+                'فيش وتشبيه': emp.police_record || '',
+                '3 صور شخصية': emp.personal_photos || '',
+                'البطاقة الصحية': emp.health_card || '',
+                'برنت تأميني': emp.insurance_print || '',
+                'ملحوظة': emp.notes || ''
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "الموظفون");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "الموظفون والمستندات");
 
             const fileName = selectedBranch === 'all' 
-                ? 'جميع_موظفي_بن_الغرباوي.xlsx' 
-                : `موظفو_فرع_${selectedBranch}.xlsx`;
+                ? 'جميع_موظفي_بن_الغرباوي_مع_المستندات.xlsx' 
+                : `موظفو_فرع_${selectedBranch}_مع_المستندات.xlsx`;
 
             XLSX.writeFile(workbook, fileName);
         }
@@ -866,7 +1028,7 @@
             document.getElementById('addModal').classList.remove('hidden');
             setupBranchDropdowns();
             if (emp) {
-                document.getElementById('modalTitle').textContent = 'تعديل بيانات موظف';
+                document.getElementById('modalTitle').textContent = 'تعديل بيانات موظف ومستنداته';
                 document.getElementById('empId').value = emp.id;
                 document.getElementById('empName').value = emp.name || '';
                 document.getElementById('empBranch').value = emp.branch || '';
@@ -874,6 +1036,19 @@
                 document.getElementById('empBadge').value = emp.badge || '';
                 document.getElementById('empCode').value = emp.code || '';
                 document.getElementById('empPhone').value = emp.phone || '';
+
+                // Background / Document fields
+                document.getElementById('empRestDay').value = emp.rest_day || '';
+                document.getElementById('empNationalId').value = emp.national_id || '';
+                document.getElementById('empBirthCert').value = emp.birth_cert || '';
+                document.getElementById('empQualCert').value = emp.qualification_cert || '';
+                document.getElementById('empMilitary').value = emp.military_service || '';
+                document.getElementById('empIdCardImg').value = emp.id_card_img || '';
+                document.getElementById('empPoliceRecord').value = emp.police_record || '';
+                document.getElementById('empPhotos').value = emp.personal_photos || '';
+                document.getElementById('empHealthCard').value = emp.health_card || '';
+                document.getElementById('empInsurance').value = emp.insurance_print || '';
+                document.getElementById('empNotes').value = emp.notes || '';
             } else {
                 document.getElementById('modalTitle').textContent = 'إضافة موظف جديد للسحابة';
                 document.getElementById('addEmployeeForm').reset();
@@ -968,7 +1143,18 @@
                 role: document.getElementById('empRole').value.trim() || null,
                 badge: document.getElementById('empBadge').value.trim() || null,
                 code: document.getElementById('empCode').value.trim() || null,
-                phone: document.getElementById('empPhone').value.trim() || null
+                phone: document.getElementById('empPhone').value.trim() || null,
+                rest_day: document.getElementById('empRestDay').value.trim() || null,
+                national_id: document.getElementById('empNationalId').value.trim() || null,
+                birth_cert: document.getElementById('empBirthCert').value.trim() || null,
+                qualification_cert: document.getElementById('empQualCert').value.trim() || null,
+                military_service: document.getElementById('empMilitary').value.trim() || null,
+                id_card_img: document.getElementById('empIdCardImg').value.trim() || null,
+                police_record: document.getElementById('empPoliceRecord').value.trim() || null,
+                personal_photos: document.getElementById('empPhotos').value.trim() || null,
+                health_card: document.getElementById('empHealthCard').value.trim() || null,
+                insurance_print: document.getElementById('empInsurance').value.trim() || null,
+                notes: document.getElementById('empNotes').value.trim() || null
             };
 
             try {
@@ -1007,7 +1193,7 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const sheetName = workbook.SheetNames.includes('جميع الموظفين ') ? 'جميع الموظفين ' : workbook.SheetNames[0];
+                    const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
                     const json = XLSX.utils.sheet_to_json(worksheet);
 
@@ -1026,7 +1212,18 @@
                             role: (row['الوظيفة '] || row['الوظيفة']) ? String(row['الوظيفة '] || row['الوظيفة']).trim() : null,
                             badge: (row['رقم البصمه '] !== undefined) ? String(row['رقم البصمه '] || '').replace('.0', '').trim() : null,
                             code: (row['الرقم الوظيفي '] !== undefined) ? String(row['الرقم الوظيفي '] || '').replace('.0', '').trim() : null,
-                            phone: (row['رقم التيفون'] !== undefined) ? String(row['رقم التيفون'] || '').replace('.0', '').trim() : null
+                            phone: (row['رقم التيفون'] !== undefined) ? String(row['رقم التيفون'] || '').replace('.0', '').trim() : null,
+                            rest_day: row['يوم الإجازة'] ? String(row['يوم الإجازة']).trim() : null,
+                            national_id: row['رقم البطاقة'] ? String(row['رقم البطاقة']).replace('.0', '').trim() : null,
+                            birth_cert: row['شهادة الميلاد (أصل)'] ? String(row['شهادة الميلاد (أصل)']).trim() : null,
+                            qualification_cert: row['شهادة المؤهل (أصل)'] ? String(row['شهادة المؤهل (أصل)']).trim() : null,
+                            military_service: row['الخدمة العسكرية'] ? String(row['الخدمة العسكرية']).trim() : null,
+                            id_card_img: row['صورة البطاقة'] ? String(row['صورة البطاقة']).trim() : null,
+                            police_record: row['فيش وتشبيه'] ? String(row['فيش وتشبيه']).trim() : null,
+                            personal_photos: row['3 صور شخصية'] ? String(row['3 صور شخصية']).trim() : null,
+                            health_card: row['البطاقة الصحية'] ? String(row['البطاقة الصحية']).trim() : null,
+                            insurance_print: row['برنت تأميني'] ? String(row['برنت تأميني']).trim() : null,
+                            notes: row['ملحوظة'] ? String(row['ملحوظة']).trim() : null
                         };
                     }).filter(emp => emp !== null);
 
@@ -1037,7 +1234,7 @@
                         if (error) throw error;
                     }
 
-                    alert(`تم بنجاح استيراد ورفع ${employeesToInsert.length} موظفاً!`);
+                    alert(`تم بنجاح استيراد ورفع ${employeesToInsert.length} موظفاً مع بياناتهم ومستنداتهم!`);
                     fetchEmployees();
                 } catch (err) {
                     console.error('خطأ أثناء الاستيراد:', err);
