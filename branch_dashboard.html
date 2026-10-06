@@ -219,17 +219,39 @@
         let currentUser = null; 
         let allOrders = [];
         let allCustomers = [];
+        let realtimeChannel = null;
+
+        // طلب إذن إشعارات المتصفح عند تحميل الصفحة
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        // دالة إظهار الإشعار عند وصول أوردر جديد وتشغيل التنبيه الصوتي
+        function showNewOrderNotification(orderId, customerName, branchName) {
+            if (Notification.permission === "granted") {
+                new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                    body: `تم استلام أوردر جديد (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
+                    icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                });
+                
+                // تشغيل صوت التنبيه
+                try {
+                    let audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                    audio.play();
+                } catch(e) {
+                    console.log("لم يتم تشغيل الصوت تلقائياً بسبب سياسة المتصفح:", e);
+                }
+            }
+        }
 
         // التحقق مما إذا كان الدخول قادماً من حساب المدير/البرتال المركزى
         window.addEventListener('DOMContentLoaded', () => {
             const role = sessionStorage.getItem('gharbawee_role');
             
-            // إذا كان الدخول من حساب المدير العام أو مسؤول الفروع بالبوابة المركزية
             if (role === 'master' || role === 'branch_admin') {
                 currentUser = { role: 'admin', name: 'الإدارة الرئيسية' };
                 initDashboard();
             } else {
-                // خلاف ذلك، تظهر شاشة تسجيل الدخول العادية
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('dashboardScreen').classList.add('hidden');
             }
@@ -272,6 +294,10 @@
         function logout() {
             currentUser = null;
             sessionStorage.clear();
+            if (realtimeChannel) {
+                supabaseClient.removeChannel(realtimeChannel);
+                realtimeChannel = null;
+            }
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('dashboardScreen').classList.add('hidden');
             document.getElementById('passwordInput').value = '';
@@ -297,6 +323,27 @@
             }
 
             await loadOrders();
+            setupRealtimeSubscription();
+        }
+
+        // الاستماع الفوري للطلبات الجديدة من قاعدة البيانات (Supabase Realtime)
+        function setupRealtimeSubscription() {
+            if (realtimeChannel) return;
+
+            realtimeChannel = supabaseClient
+                .channel('public:orders')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+                    const newOrder = payload.new;
+                    // إذا كان المستخدم مدير فرع، نتحقق أن الطلب يخص فرعه فقط
+                    if (currentUser && currentUser.role === 'branch' && newOrder.region !== currentUser.name) {
+                        return;
+                    }
+                    // إظهار الإشعار الصوتي ومرئي على ويندوز
+                    showNewOrderNotification(newOrder.id, newOrder.name, newOrder.region);
+                    // تحديث الجدول والإحصائيات تلقائياً
+                    loadOrders();
+                })
+                .subscribe();
         }
 
         function switchTab(tabName) {
@@ -313,7 +360,7 @@
             } else {
                 ordersSec.classList.add('hidden');
                 customersSec.classList.remove('hidden');
-                customersBtn.className = "bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition";
+                customersBtn.className = "bg-blue-900 text-white px-4 py-2 rounded-lg font-bold text-xs transition";
                 ordersBtn.className = "bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition";
             }
         }
