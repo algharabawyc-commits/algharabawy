@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- شاشة تسجيل الدخول (تظهر فقط عند فتح الصفحة مباشرة بدون البوابة المركزية) -->
+    <!-- شاشة تسجيل الدخول -->
     <div id="loginScreen" class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-gray-200 space-y-6 hidden">
         <div class="text-center space-y-2">
             <div class="bg-amber-900 w-16 h-16 mx-auto rounded-2xl flex items-center justify-center shadow-md">
@@ -77,7 +77,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="enableDesktopNotifications()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center gap-1">
-                    🔔 تفعيل الإشعارات
+                    🔔 تفعيل إشعارات ويندوز
                 </button>
                 <button onclick="refreshData()" class="bg-amber-700 hover:bg-amber-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow">
                     🔄 تحديث
@@ -226,8 +226,12 @@
         let lastOrderCount = 0;
         let isInitialLoad = true;
 
-        // دالة تفعيل الإشعارات بضغط الزر
+        // طلب إذن الإشعارات عند الضغط أو تلقائياً
         function enableDesktopNotifications() {
+            if (!("Notification" in window)) {
+                alert("متصفحك لا يدعم إشعارات سطح المكتب.");
+                return;
+            }
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     alert("تم تفعيل إشعارات ويندوز بنجاح! 🔔");
@@ -236,12 +240,12 @@
                         icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
                     });
                 } else {
-                    alert("تم رفض إذن الإشعارات من المتصفح. يرجى السماح بها بالنقر على أيقونة القفل بجوار رابط الموقع.");
+                    alert("تم رفض إذن الإشعارات من المتصفح. يمكنك السماح بها بالضغط على أيقونة القفل أو الإعدادات بجوار رابط الموقع.");
                 }
             });
         }
 
-        // تشغيل صوت تنبيه داخلي (Beep) بدون الحاجة لملفات خارجية
+        // تشغيل صوت تنبيه داخلي (Beep)
         function playBeepSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -249,27 +253,53 @@
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد النغمة
-                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.6); // مدة نصف ثانية
+                oscillator.stop(audioCtx.currentTime + 0.6);
             } catch (e) {
                 console.log("AudioContext error:", e);
             }
         }
 
-        // دالة إظهار الإشعار وتشغيل الصوت عند وصول أوردر جديد
-        function showNewOrderNotification(orderId, customerName, branchName) {
+        // إشعار مرئي عائم داخل الشاشة (Toast) يظهر في أسفل اليسار لضمان رؤية الأوردر فورا
+        function showToastNotification(orderId, customerName, branchName) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-6 left-6 bg-amber-900 text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-amber-400 z-50 flex items-center gap-4 animate-pulse";
+            toast.innerHTML = `
+                <div class="text-3xl">🔔</div>
+                <div>
+                    <h4 class="font-bold text-sm">طلب جديد وصل! (#${orderId})</h4>
+                    <p class="text-xs text-amber-200">العميل: ${customerName} - فرع: ${branchName}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="mr-auto text-amber-300 hover:text-white font-bold text-lg px-2">✕</button>
+            `;
+            document.body.appendChild(toast);
+
+            // إخفاء الإشعار تلقائياً بعد 15 ثانية
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 15000);
+        }
+
+        // دالة التنبيه المجمعة (صوت + إشعار مرئي + إشعار ويندوز إن وجد إذن)
+        function triggerNewOrderAlert(orderId, customerName, branchName) {
             playBeepSound();
-            if (Notification.permission === "granted") {
-                new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                    body: `تم استلام أوردر جديد (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
-                    icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
-                });
+            showToastNotification(orderId, customerName, branchName);
+
+            if (("Notification" in window) && Notification.permission === "granted") {
+                try {
+                    new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                        body: `تم استلام أوردر جديد (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
+                        icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                    });
+                } catch (e) {
+                    console.log("Notification error:", e);
+                }
             }
         }
 
@@ -283,6 +313,11 @@
             } else {
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('dashboardScreen').classList.add('hidden');
+            }
+
+            // طلب إذن الإشعارات تلقائياً في الخلفية عند فتح الصفحة لأول مرة
+            if (("Notification" in window) && Notification.permission === "default") {
+                Notification.requestPermission();
             }
         });
 
@@ -357,7 +392,7 @@
             startPolling();
         }
 
-        // فحص دوري كل 5 ثوانٍ لجلب الطلبات الجديدة وإطلاق التنبيه الفوري
+        // فحص دوري كل 5 ثوانٍ لجلب الطلبات الجديدة
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
@@ -380,7 +415,7 @@
                     if (!isInitial && fetchedOrders.length > lastOrderCount && lastOrderCount > 0) {
                         // اكتشاف أوردر جديد تم إضافته
                         const newestOrder = fetchedOrders[0];
-                        showNewOrderNotification(newestOrder.id, newestOrder.name, newestOrder.region);
+                        triggerNewOrderAlert(newestOrder.id, newestOrder.name, newestOrder.region);
                     }
 
                     allOrders = fetchedOrders;
