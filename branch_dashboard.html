@@ -197,7 +197,7 @@
     </div>
 
     <script>
-        // إعدادات Supabase
+        // إعدادات Supabase[cite: 2]
         const SUPABASE_URL = 'https://csroadhvynbSksqncrur.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -225,6 +225,26 @@
         let pollingInterval = null;
         let lastOrderCount = 0;
         let isInitialLoad = true;
+
+        // دالة التنقل بين التبويبات (الأوردرات والعملاء) للإدارة العامة
+        function switchTab(tabName) {
+            const ordersSec = document.getElementById('ordersSection');
+            const customersSec = document.getElementById('customersSection');
+            const ordersBtn = document.getElementById('tabOrdersBtn');
+            const customersBtn = document.getElementById('tabCustomersBtn');
+
+            if (tabName === 'orders') {
+                ordersSec.classList.remove('hidden');
+                customersSec.classList.add('hidden');
+                ordersBtn.className = "bg-amber-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition";
+                customersBtn.className = "bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition";
+            } else if (tabName === 'customers') {
+                customersSec.classList.remove('hidden');
+                ordersSec.classList.add('hidden');
+                customersBtn.className = "bg-amber-900 text-white px-4 py-2 rounded-lg font-bold text-xs shadow transition";
+                ordersBtn.className = "bg-white text-gray-700 hover:bg-gray-50 border px-4 py-2 rounded-lg font-bold text-xs transition";
+            }
+        }
 
         // طلب إذن الإشعارات عند الضغط أو تلقائياً
         function enableDesktopNotifications() {
@@ -340,6 +360,7 @@
             if (loginType === 'admin') {
                 if (ADMIN_PASSWORDS.includes(password)) {
                     currentUser = { role: 'admin', name: 'الإدارة الرئيسية' };
+                    sessionStorage.setItem('gharbawee_role', 'master');
                     initDashboard();
                 } else {
                     errorMsg.classList.remove('hidden');
@@ -348,6 +369,7 @@
                 const branch = document.getElementById('branchName').value;
                 if (branchPasswords[branch] && password === branchPasswords[branch]) {
                     currentUser = { role: 'branch', name: branch };
+                    sessionStorage.setItem('gharbawee_role', 'branch_admin');
                     initDashboard();
                 } else {
                     errorMsg.classList.remove('hidden');
