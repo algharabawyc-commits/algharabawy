@@ -197,7 +197,7 @@
     </div>
 
     <script>
-        // إعدادات Supabase[cite: 2]
+        // إعدادات Supabase
         const SUPABASE_URL = 'https://csroadhvynbSksqncrur.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -310,14 +310,20 @@
             playBeepSound();
             showToastNotification(orderId, customerName, branchName);
 
-            // تفعيل إشعار الويندوز النظامي
+            // تفعيل إشعار الويندوز النظامي الثابت
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     try {
-                        new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                            body: `تم استلام أوردر جديد رقم (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
-                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                        const notif = new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                            body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
+                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                            requireInteraction: true
                         });
+
+                        notif.onclick = function() {
+                            window.focus();
+                            this.close();
+                        };
                     } catch (e) {
                         console.log("Notification execution error:", e);
                     }
@@ -325,8 +331,9 @@
                     Notification.requestPermission().then(permission => {
                         if (permission === "granted") {
                             new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                                body: `تم استلام أوردر جديد رقم (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
-                                icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                                body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
+                                icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                                requireInteraction: true
                             });
                         }
                     });
