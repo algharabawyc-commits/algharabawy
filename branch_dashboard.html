@@ -226,7 +226,15 @@
         let lastOrderCount = 0;
         let isInitialLoad = true;
 
-        // دالة التنقل بين التبويبات (الأوردرات والعملاء) للإدارة العامة
+        // تسجيل ملف الـ Service Worker (sw.js) فور فتح الصفحة لضمان عمل إشعارات الويندوز
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+
         function switchTab(tabName) {
             const ordersSec = document.getElementById('ordersSection');
             const customersSec = document.getElementById('customersSection');
@@ -255,9 +263,11 @@
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     alert("تم تفعيل إشعارات ويندوز بنجاح! 🔔");
-                    new Notification("بن الغرباوي", {
-                        body: "تم تفعيل إشعارات الأوردرات الجديدة بنجاح",
-                        icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification("بن الغرباوي", {
+                            body: "تم تفعيل إشعارات الأوردرات الجديدة بنجاح",
+                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                        });
                     });
                 } else {
                     alert("تم رفض إذن الإشعارات من المتصفح. يمكنك السماح بها بالضغط على أيقونة القفل بجوار رابط الموقع في شريط العنوان.");
@@ -305,35 +315,36 @@
             }, 15000);
         }
 
-        // دالة التنبيه المجمعة (صوت + إشعار مرئي + إشعار ويندوز نظامي)
+        // دالة التنبيه المجمعة عبر Service Worker لإظهار إشعار الويندوز النظامي
         function triggerNewOrderAlert(orderId, customerName, branchName) {
             playBeepSound();
             showToastNotification(orderId, customerName, branchName);
 
-            // تفعيل إشعار الويندوز النظامي الثابت
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
-                    try {
-                        const notif = new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification("طلب جديد وصل! 🔔 - بن الغرباوي", {
                             body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
                             icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
                             requireInteraction: true
                         });
-
-                        notif.onclick = function() {
-                            window.focus();
-                            this.close();
-                        };
-                    } catch (e) {
-                        console.log("Notification execution error:", e);
-                    }
+                    }).catch(err => {
+                        // كبديل احتياطي لو الـ Service Worker لم يكن جاهزاً تماماً
+                        new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                            body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
+                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                            requireInteraction: true
+                        });
+                    });
                 } else if (Notification.permission !== "denied") {
                     Notification.requestPermission().then(permission => {
                         if (permission === "granted") {
-                            new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                                body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
-                                icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
-                                requireInteraction: true
+                            navigator.serviceWorker.ready.then(registration => {
+                                registration.showNotification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                                    body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
+                                    icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
+                                    requireInteraction: true
+                                });
                             });
                         }
                     });
