@@ -246,7 +246,7 @@
             }
         }
 
-        // طلب إذن الإشعارات عند الضغط أو تلقائياً
+        // طلب إذن الإشعارات بنظام الويندوز وسطح المكتب
         function enableDesktopNotifications() {
             if (!("Notification" in window)) {
                 alert("متصفحك لا يدعم إشعارات سطح المكتب.");
@@ -260,7 +260,7 @@
                         icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
                     });
                 } else {
-                    alert("تم رفض إذن الإشعارات من المتصفح. يمكنك السماح بها بالضغط على أيقونة القفل أو الإعدادات بجوار رابط الموقع.");
+                    alert("تم رفض إذن الإشعارات من المتصفح. يمكنك السماح بها بالضغط على أيقونة القفل بجوار رابط الموقع في شريط العنوان.");
                 }
             });
         }
@@ -286,7 +286,7 @@
             }
         }
 
-        // إشعار مرئي عائم داخل الشاشة (Toast) يظهر في أسفل اليسار لضمان رؤية الأوردر فورا
+        // إشعار مرئي عائم داخل الشاشة (Toast)
         function showToastNotification(orderId, customerName, branchName) {
             const toast = document.createElement('div');
             toast.className = "fixed bottom-6 left-6 bg-amber-900 text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-amber-400 z-50 flex items-center gap-4 animate-pulse";
@@ -300,30 +300,40 @@
             `;
             document.body.appendChild(toast);
 
-            // إخفاء الإشعار تلقائياً بعد 15 ثانية
             setTimeout(() => {
                 if (toast.parentElement) toast.remove();
             }, 15000);
         }
 
-        // دالة التنبيه المجمعة (صوت + إشعار مرئي + إشعار ويندوز إن وجد إذن)
+        // دالة التنبيه المجمعة (صوت + إشعار مرئي + إشعار ويندوز نظامي)
         function triggerNewOrderAlert(orderId, customerName, branchName) {
             playBeepSound();
             showToastNotification(orderId, customerName, branchName);
 
-            if (("Notification" in window) && Notification.permission === "granted") {
-                try {
-                    new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                        body: `تم استلام أوردر جديد (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
-                        icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+            // تفعيل إشعار الويندوز النظامي
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    try {
+                        new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                            body: `تم استلام أوردر جديد رقم (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
+                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                        });
+                    } catch (e) {
+                        console.log("Notification execution error:", e);
+                    }
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
+                                body: `تم استلام أوردر جديد رقم (${orderId}) للعميل: ${customerName} - فرع: ${branchName}`,
+                                icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
+                            });
+                        }
                     });
-                } catch (e) {
-                    console.log("Notification error:", e);
                 }
             }
         }
 
-        // التحقق مما إذا كان الدخول قادماً من حساب المدير/البوابة المركزية
         window.addEventListener('DOMContentLoaded', () => {
             const role = sessionStorage.getItem('gharbawee_role');
             
@@ -335,7 +345,6 @@
                 document.getElementById('dashboardScreen').classList.add('hidden');
             }
 
-            // طلب إذن الإشعارات تلقائياً في الخلفية عند فتح الصفحة لأول مرة
             if (("Notification" in window) && Notification.permission === "default") {
                 Notification.requestPermission();
             }
@@ -414,7 +423,6 @@
             startPolling();
         }
 
-        // فحص دوري كل 5 ثوانٍ لجلب الطلبات الجديدة
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(async () => {
@@ -435,7 +443,6 @@
                     const fetchedOrders = data || [];
                     
                     if (!isInitial && fetchedOrders.length > lastOrderCount && lastOrderCount > 0) {
-                        // اكتشاف أوردر جديد تم إضافته
                         const newestOrder = fetchedOrders[0];
                         triggerNewOrderAlert(newestOrder.id, newestOrder.name, newestOrder.region);
                     }
