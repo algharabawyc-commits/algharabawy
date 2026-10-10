@@ -134,9 +134,17 @@
 
             <!-- قسم الأوردرات -->
             <div id="ordersSection" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                <div class="p-4 border-b bg-gray-50 flex flex-wrap justify-between items-center gap-3">
                     <h3 class="font-bold text-gray-800 text-base">📋 قائمة الأوردرات الواردة</h3>
-                    <div>
+                    <div class="flex items-center gap-2">
+                        <!-- فلترة التاريخ -->
+                        <select id="filterDate" onchange="filterOrders()" class="bg-white border text-xs px-3 py-1.5 rounded-lg focus:outline-none">
+                            <option value="all">📅 كل التواريخ</option>
+                            <option value="today">اليوم فقط</option>
+                            <option value="week">آخر 7 أيام</option>
+                            <option value="month">هذا الشهر</option>
+                        </select>
+                        <!-- فلترة الحالة -->
                         <select id="filterStatus" onchange="filterOrders()" class="bg-white border text-xs px-3 py-1.5 rounded-lg focus:outline-none">
                             <option value="all">كل الحالات</option>
                             <option value="جديد">جديد</option>
@@ -152,9 +160,9 @@
                     <table class="w-full text-right text-xs">
                         <thead class="bg-amber-900 text-white">
                             <tr>
-                                <th class="p-3">رقم الأوردر</th>
+                                <th class="p-3">رقم الأوردر والتاريخ</th>
                                 <th class="p-3">اسم العميل</th>
-                                <th class="p-3">الهواتف</th>
+                                <th class="p-3">الهواتف (اتصال ونسخ)</th>
                                 <th class="p-3">الطلبات</th>
                                 <th class="p-3">العنوان والفرع</th>
                                 <th class="p-3">الحالة</th>
@@ -196,8 +204,13 @@
         </main>
     </div>
 
+    <!-- رسالة تنبيه منبثقة صغيرة للنسخ -->
+    <div id="copyToast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-4 py-2 rounded-xl text-xs shadow-2xl z-50 hidden">
+        📋 تم نسخ رقم الهاتف بنجاح!
+    </div>
+
     <script>
-        // إعدادات Supabase
+        // إعدادات Supabase[cite: 2]
         const SUPABASE_URL = 'https://csroadhvynbSksqncrur.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_oGcXPVopb4DItZ2LY6V1vQ_bQ3vf30C';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -224,14 +237,11 @@
         let allCustomers = [];
         let pollingInterval = null;
         let lastOrderCount = 0;
-        let isInitialLoad = true;
+        let alertedDelayedOrders = new Set(); // لمنع تكرار تنبيه نفس الطلب المتأخر مراراً
 
-        // تسجيل ملف الـ Service Worker (sw.js) فور فتح الصفحة لضمان عمل إشعارات الويندوز
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-                    .catch(err => console.log('Service Worker registration failed:', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
             });
         }
 
@@ -254,7 +264,6 @@
             }
         }
 
-        // طلب إذن الإشعارات بنظام الويندوز وسطح المكتب
         function enableDesktopNotifications() {
             if (!("Notification" in window)) {
                 alert("متصفحك لا يدعم إشعارات سطح المكتب.");
@@ -263,19 +272,12 @@
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     alert("تم تفعيل إشعارات ويندوز بنجاح! 🔔");
-                    navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification("بن الغرباوي", {
-                            body: "تم تفعيل إشعارات الأوردرات الجديدة بنجاح",
-                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png"
-                        });
-                    });
                 } else {
-                    alert("تم رفض إذن الإشعارات من المتصفح. يمكنك السماح بها بالضغط على أيقونة القفل بجوار رابط الموقع في شريط العنوان.");
+                    alert("تم رفض إذن الإشعارات من المتصفح.");
                 }
             });
         }
 
-        // تشغيل صوت تنبيه داخلي (Beep)
         function playBeepSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -296,8 +298,46 @@
             }
         }
 
-        // إشعار مرئي عائم داخل الشاشة (Toast)
-        function showToastNotification(orderId, customerName, branchName) {
+        // إشعار مرئي مخصص للتأخير يظهر للإدارة العامة
+        function showDelayToast(orderId, branchName, minutesDelayed) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-6 left-6 bg-red-900 text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-red-400 z-50 flex items-center gap-4 animate-pulse";
+            toast.innerHTML = `
+                <div class="text-3xl">⚠️</div>
+                <div>
+                    <h4 class="font-bold text-sm">تنبيه تأخير طلب! (#${orderId})</h4>
+                    <p class="text-xs text-red-200">الفرع: ${branchName} - متأخر لأكثر من ${minutesDelayed} دقائق!</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="mr-auto text-red-300 hover:text-white font-bold text-lg px-2">✕</button>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 15000);
+        }
+
+        // فحص الأوردرات المتأخرة لأكثر من 3 دقائق وهي في حالة "جديد" (للإدارة العامة فقط)
+        function checkDelayedOrders(orders) {
+            if (!currentUser || currentUser.role !== 'admin') return;
+
+            const now = new Date();
+            orders.forEach(order => {
+                // إذا كان الطلب في حالة جديد ولم يتم تغييره ولديه وقت إنشاء
+                if (order.status && order.status.includes('جديد') && order.created_at) {
+                    let createdTime = new Date(order.created_at);
+                    let diffMs = now - createdTime;
+                    let diffMins = Math.floor(diffMs / 60000);
+
+                    // إذا مر أكثر من 3 دقائق ولم يتم التنبيه عنه مسبقاً في هذه الجلسة
+                    if (diffMins >= 3 && !alertedDelayedOrders.has(order.id)) {
+                        alertedDelayedOrders.add(order.id);
+                        playBeepSound();
+                        showDelayToast(order.id, order.region, diffMins);
+                    }
+                }
+            });
+        }
+
+        function triggerNewOrderAlert(orderId, customerName, branchName) {
+            playBeepSound();
             const toast = document.createElement('div');
             toast.className = "fixed bottom-6 left-6 bg-amber-900 text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-amber-400 z-50 flex items-center gap-4 animate-pulse";
             toast.innerHTML = `
@@ -309,47 +349,15 @@
                 <button onclick="this.parentElement.remove()" class="mr-auto text-amber-300 hover:text-white font-bold text-lg px-2">✕</button>
             `;
             document.body.appendChild(toast);
-
-            setTimeout(() => {
-                if (toast.parentElement) toast.remove();
-            }, 15000);
+            setTimeout(() => { if (toast.parentElement) toast.remove(); }, 15000);
         }
 
-        // دالة التنبيه المجمعة عبر Service Worker لإظهار إشعار الويندوز النظامي
-        function triggerNewOrderAlert(orderId, customerName, branchName) {
-            playBeepSound();
-            showToastNotification(orderId, customerName, branchName);
-
-            if ("Notification" in window) {
-                if (Notification.permission === "granted") {
-                    navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                            body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
-                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
-                            requireInteraction: true
-                        });
-                    }).catch(err => {
-                        // كبديل احتياطي لو الـ Service Worker لم يكن جاهزاً تماماً
-                        new Notification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                            body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
-                            icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
-                            requireInteraction: true
-                        });
-                    });
-                } else if (Notification.permission !== "denied") {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            navigator.serviceWorker.ready.then(registration => {
-                                registration.showNotification("طلب جديد وصل! 🔔 - بن الغرباوي", {
-                                    body: `أوردر جديد رقم (${orderId})\nالعميل: ${customerName}\nالفرع: ${branchName}`,
-                                    icon: "https://i.postimg.cc/VvnhkQhY/logo-01.png",
-                                    requireInteraction: true
-                                });
-                            });
-                        }
-                    });
-                }
-            }
+        function copyPhoneNumber(phone) {
+            navigator.clipboard.writeText(phone).then(() => {
+                const toast = document.getElementById('copyToast');
+                toast.classList.remove('hidden');
+                setTimeout(() => { toast.classList.add('hidden'); }, 2000);
+            });
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -407,10 +415,7 @@
         function logout() {
             currentUser = null;
             sessionStorage.clear();
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
             isInitialLoad = true;
             lastOrderCount = 0;
             document.getElementById('loginScreen').classList.remove('hidden');
@@ -469,8 +474,9 @@
                     lastOrderCount = fetchedOrders.length;
                     isInitialLoad = false;
                     
-                    renderOrders(allOrders);
+                    filterOrders();
                     updateStats();
+                    checkDelayedOrders(allOrders); // فحص التأخير للإدارة العامة
                 }
             } catch (err) {
                 console.error('خطأ في جلب الأوردرات:', err);
@@ -495,7 +501,7 @@
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-6 text-gray-400">لا توجد أوردرات مسجلة لهذا الفرع حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center p-6 text-gray-400">لا توجد أوردرات مطابقة للبحث أو التصفية الحالية.</td></tr>`;
                 return;
             }
 
@@ -510,14 +516,34 @@
                     `;
                 }
 
+                let dateStr = '';
+                if (order.created_at) {
+                    let d = new Date(order.created_at);
+                    dateStr = `<div class="text-[10px] text-gray-400">${d.toLocaleDateString('ar-EG')} - ${d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})}</div>`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-amber-50/40 transition";
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-amber-900">${order.id}</td>
+                    <td class="p-3">
+                        <div class="font-bold text-amber-900">${order.id}</div>
+                        ${dateStr}
+                    </td>
                     <td class="p-3 font-bold">${order.name}</td>
                     <td class="p-3">
-                        <div>📞 ${order.phone1}</div>
-                        ${order.phone2 ? `<div class="text-gray-400 text-[11px]">📞 ${order.phone2}</div>` : ''}
+                        <div class="flex items-center gap-1.5">
+                            <a href="tel:${order.phone1}" class="text-blue-700 font-semibold hover:underline flex items-center gap-1" title="اتصال بالعميل">
+                                📞 <span>${order.phone1}</span>
+                            </a>
+                            <button onclick="copyPhoneNumber('${order.phone1}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-[10px] font-bold" title="نسخ الرقم">📋 نسخ</button>
+                        </div>
+                        ${order.phone2 ? `
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <a href="tel:${order.phone2}" class="text-gray-600 hover:underline flex items-center gap-1">
+                                📞 <span>${order.phone2}</span>
+                            </a>
+                            <button onclick="copyPhoneNumber('${order.phone2}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded text-[10px] font-bold" title="نسخ الرقم">📋 نسخ</button>
+                        </div>` : ''}
                     </td>
                     <td class="p-3 font-semibold text-gray-900 max-w-xs">${order.details}</td>
                     <td class="p-3">
@@ -586,13 +612,35 @@
         }
 
         function filterOrders() {
-            const filterVal = document.getElementById('filterStatus').value;
-            if (filterVal === 'all') {
-                renderOrders(allOrders);
-            } else {
-                const filtered = allOrders.filter(o => o.status && o.status.includes(filterVal));
-                renderOrders(filtered);
-            }
+            const statusFilter = document.getElementById('filterStatus').value;
+            const dateFilter = document.getElementById('filterDate').value;
+
+            let filtered = allOrders.filter(order => {
+                let matchesStatus = true;
+                if (statusFilter !== 'all') {
+                    matchesStatus = order.status && order.status.includes(statusFilter);
+                }
+
+                let matchesDate = true;
+                if (dateFilter !== 'all' && order.created_at) {
+                    let orderDate = new Date(order.created_at);
+                    let now = new Date();
+
+                    if (dateFilter === 'today') {
+                        matchesDate = orderDate.toDateString() === now.toDateString();
+                    } else if (dateFilter === 'week') {
+                        let diffTime = Math.abs(now - orderDate);
+                        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        matchesDate = diffDays <= 7;
+                    } else if (dateFilter === 'month') {
+                        matchesDate = orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+                    }
+                }
+
+                return matchesStatus && matchesDate;
+            });
+
+            renderOrders(filtered);
         }
 
         function updateStats() {
