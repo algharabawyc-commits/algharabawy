@@ -543,10 +543,10 @@
             const role = sessionStorage.getItem('gharbawee_role');
             const storedBranch = sessionStorage.getItem('gharbawee_branch');
             
-            if (role === 'master') {
+            if (role === 'master' || role === 'branch_admin') {
                 currentUser = { role: 'admin', name: 'الإدارة الرئيسية' };
                 initDashboard();
-            } else if (role === 'branch_admin' && storedBranch) {
+            } else if (storedBranch) {
                 currentUser = { role: 'branch', name: storedBranch };
                 initDashboard();
             } else {
@@ -598,9 +598,16 @@
         }
 
         function logout() {
-            currentUser = null;
             sessionStorage.clear();
             if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+            
+            // التوجيه التلقائي للبوابة المركزية إذا كان الدخول بيوزر المدير العام
+            if (currentUser && currentUser.role === 'admin') {
+                window.location.href = 'index_2.html';
+                return;
+            }
+
+            currentUser = null;
             lastOrderCount = 0;
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('dashboardScreen').classList.add('hidden');
@@ -618,6 +625,7 @@
                 document.getElementById('adminTabsNav').classList.remove('hidden');
                 document.getElementById('customerStatCard').classList.remove('hidden');
                 await loadCustomers();
+                switchTab('orders');
             } else {
                 document.getElementById('dashboardTitle').textContent = `فرع: ${currentUser.name}`;
                 document.getElementById('userRoleBadge').textContent = 'مدير الفرع';
