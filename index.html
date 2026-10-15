@@ -59,7 +59,7 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">اختر القسم الذي تريد الانتقال إليه:</p>
             </div>
 
-            <a href="branch_dashboard.html" onclick="setSession('branch_admin')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-center font-bold text-sm transition shadow">
+            <a href="branch_dashboard.html" onclick="setSession('master')" class="block w-full bg-slate-50 dark:bg-slate-900 hover:bg-amber-600 hover:text-white border border-slate-300 dark:border-slate-700 rounded-xl p-3.5 text-center font-bold text-sm transition shadow">
                 ☕ لوحة إدارة الفروع والأوردرات
             </a>
 
@@ -117,7 +117,7 @@
             else if (role === 'branch_admin') {
                 if (password === 'algharabawy3') {
                     sessionStorage.setItem('auth_session', 'active');
-                    sessionStorage.setItem('gharbawee_role', 'branch_admin');
+                    sessionStorage.setItem('gharbawee_role', 'master'); // فتح لوحة الأوردرات بصلاحيات المدير العام الشاملة
                     window.location.href = 'branch_dashboard.html';
                 } else {
                     errorMsg.classList.remove('hidden');
